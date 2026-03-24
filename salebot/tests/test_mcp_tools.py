@@ -12,6 +12,8 @@ from mcp_tools import (
     TOOLS,
     TIMEOUT,
     execute_search_flights,
+    execute_search_hotels,
+    execute_search_activities,
     execute_tool,
 )
 
@@ -182,3 +184,212 @@ class TestExecuteTool:
         result = await execute_tool("nonexistent_tool", {})
         assert "Unknown tool" in result
         assert "nonexistent_tool" in result
+
+
+# ---------------------------------------------------------------------------
+# TestExecuteSearchHotels — FR-2
+# ---------------------------------------------------------------------------
+
+
+class TestExecuteSearchHotels:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_hotels_for_valid_city(self, mock_hotel_response):
+        """FR-2: valid city returns list of hotels from FastAPI."""
+        respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=mock_hotel_response)
+        )
+        result = await execute_search_hotels({"city": "Singapore"})
+        import json
+        hotels = json.loads(result)
+        assert len(hotels) == 1
+        assert hotels[0]["name"] == "The Singapore Suites"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_filters_out_zero_rooms(self, mock_hotel_response):
+        """FR-2: hotels with rooms_available == 0 must be excluded per spec."""
+        respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=mock_hotel_response)
+        )
+        result = await execute_search_hotels({"city": "Singapore"})
+        import json
+        hotels = json.loads(result)
+        for h in hotels:
+            assert h["rooms_available"] > 0
+
+    @pytest.mark.asyncio
+    async def test_city_is_required(self):
+        """FR-2: missing city returns clear error message per spec."""
+        result = await execute_search_hotels({})
+        assert result == "City is required to search for hotels."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_optional_stars_sent_as_param(self, mock_hotel_response):
+        """FR-2: stars param is included in query only when provided."""
+        route = respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=mock_hotel_response)
+        )
+        await execute_search_hotels({"city": "Singapore", "stars": 4})
+        request = route.calls[0].request
+        assert "stars=4" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_optional_max_price_sent_as_param(self, mock_hotel_response):
+        """FR-2: max_price param is included in query only when provided."""
+        route = respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=mock_hotel_response)
+        )
+        await execute_search_hotels({"city": "Singapore", "max_price": 150.0})
+        request = route.calls[0].request
+        assert "max_price=150" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_none_params_not_sent(self):
+        """FR-2: None values must not be sent as query params per spec."""
+        route = respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        await execute_search_hotels({"city": "Singapore"})
+        request = route.calls[0].request
+        assert "stars" not in str(request.url)
+        assert "max_price" not in str(request.url)
+        assert "city=Singapore" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_empty_results_returns_message(self):
+        """FR-2: empty list from API returns no hotels found message per spec."""
+        respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_hotels({"city": "Tokyo"})
+        assert result == "No hotels found in Tokyo matching the search criteria."
+
+    @pytest.mark.asyncio
+    async def test_server_unreachable_returns_message(self):
+        """FR-2: connection error returns unavailable message per spec."""
+        result = await execute_search_hotels({"city": "Singapore"})
+        assert result == "Hotel search is currently unavailable. Please try again."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_error_message_includes_city_name(self):
+        """FR-2: no results message must include the searched city name."""
+        respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_hotels({"city": "Nairobi"})
+        assert "Nairobi" in result
+
+
+# ---------------------------------------------------------------------------
+# TestExecuteSearchActivities — FR-3
+# ---------------------------------------------------------------------------
+
+
+class TestExecuteSearchActivities:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_activities_for_valid_city(self, mock_activity_response):
+        """FR-3: valid city returns list of activities from FastAPI."""
+        respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=mock_activity_response)
+        )
+        result = await execute_search_activities({"city": "Singapore"})
+        import json
+        activities = json.loads(result)
+        assert len(activities) == 3
+
+    @pytest.mark.asyncio
+    async def test_city_is_required(self):
+        """FR-3: missing city returns clear error message per spec."""
+        result = await execute_search_activities({})
+        assert result == "City is required to search for activities."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_optional_category_sent_as_param(self, mock_activity_response):
+        """FR-3: category param is included in query only when provided."""
+        route = respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=mock_activity_response)
+        )
+        await execute_search_activities({"city": "Singapore", "category": "food"})
+        request = route.calls[0].request
+        assert "category=food" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_none_params_not_sent(self):
+        """FR-3: None values must not be sent as query params per spec."""
+        route = respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        await execute_search_activities({"city": "Singapore"})
+        request = route.calls[0].request
+        assert "category" not in str(request.url)
+        assert "city=Singapore" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_empty_results_returns_message(self):
+        """FR-3: empty list from API returns no activities found message per spec."""
+        respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_activities({"city": "Tokyo"})
+        assert result == "No activities found in Tokyo matching the search criteria."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_error_message_includes_city_name(self):
+        """FR-3: no results message must include the searched city name."""
+        respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_activities({"city": "Nairobi"})
+        assert "Nairobi" in result
+
+    @pytest.mark.asyncio
+    async def test_server_unreachable_returns_message(self):
+        """FR-3: connection error returns unavailable message per spec."""
+        result = await execute_search_activities({"city": "Singapore"})
+        assert result == "Activity search is currently unavailable. Please try again."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_all_results_returned_regardless_of_availability(self, mock_activity_response):
+        """FR-3: availability field must not be used to filter results per spec."""
+        respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=mock_activity_response)
+        )
+        result = await execute_search_activities({"city": "Singapore"})
+        import json
+        activities = json.loads(result)
+        # All 3 returned including the "weekends" one
+        assert len(activities) == 3
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_category_filter_adventure(self, mock_activity_response):
+        """FR-3: category adventure is passed correctly as query param."""
+        route = respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[mock_activity_response[2]])
+        )
+        await execute_search_activities({"city": "Singapore", "category": "adventure"})
+        request = route.calls[0].request
+        assert "category=adventure" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_category_filter_food(self, mock_activity_response):
+        """FR-3: category food is passed correctly as query param."""
+        route = respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[mock_activity_response[1]])
+        )
+        await execute_search_activities({"city": "Singapore", "category": "food"})
+        request = route.calls[0].request
+        assert "category=food" in str(request.url)

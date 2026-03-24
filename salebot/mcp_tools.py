@@ -174,6 +174,8 @@ async def execute_search_flights(input: dict[str, Any]) -> str:
 
 async def execute_search_hotels(input: dict[str, Any]) -> str:
     city = input.get("city")
+    if not city:
+        return "City is required to search for hotels."
     stars = input.get("stars")
     max_price = input.get("max_price")
     try:
@@ -195,12 +197,14 @@ async def execute_search_hotels(input: dict[str, Any]) -> str:
         if h["rooms_available"] > 0
     ]
     if not results:
-        return "No hotels found matching the search criteria."
+        return f"No hotels found in {city} matching the search criteria."
     return json.dumps(results, ensure_ascii=False)
 
 
 async def execute_search_activities(input: dict[str, Any]) -> str:
     city = input.get("city")
+    if not city:
+        return "City is required to search for activities."
     category = input.get("category")
     try:
         raw = await _get("/activities", {"city": city, "category": category})
@@ -220,7 +224,7 @@ async def execute_search_activities(input: dict[str, Any]) -> str:
         for a in raw
     ]
     if not results:
-        return "No activities found matching the search criteria."
+        return f"No activities found in {city} matching the search criteria."
     return json.dumps(results, ensure_ascii=False)
 
 
