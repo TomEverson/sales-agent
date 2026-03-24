@@ -109,9 +109,8 @@ async def _run_agent_loop(
         for block in tool_use_blocks:
             try:
                 result = await execute_tool(block.name, block.input)
-                result_content = json.dumps(result, ensure_ascii=False)
-            except httpx.ConnectError:
-                result_content = json.dumps({"error": "FastAPI backend unreachable"})
+                # execute_tool returns a str (JSON or error message) — use directly
+                result_content = result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)
             except Exception as exc:
                 result_content = json.dumps({"error": str(exc)})
 

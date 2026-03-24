@@ -1,3 +1,5 @@
+import json
+
 import httpx
 from typing import Any
 
@@ -34,7 +36,7 @@ TOOLS: list[dict[str, Any]] = [
                     "description": "Optional seat class filter.",
                 },
             },
-            "required": ["origin", "destination"],
+            "required": ["destination"],
         },
     },
     {
@@ -138,16 +140,19 @@ async def _get(path: str, params: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Tool executors
+# Tool executors — each takes a raw input dict and returns a str
 # ---------------------------------------------------------------------------
 
-async def search_flights(
-    origin: str,
-    destination: str,
-    class_type: str | None = None,
-) -> list[dict[str, Any]]:
-    raw = await _get("/flights", {"origin": origin, "destination": destination, "class_type": class_type})
-    return [
+async def execute_search_flights(input: dict[str, Any]) -> str:
+    destination = input.get("destination")
+    origin = input.get("origin")
+    class_type = input.get("class_type")
+    try:
+        raw = await _get("/flights", {"origin": origin, "destination": destination, "class_type": class_type})
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return "Flight search is currently unavailable. Please try again."
+
+    results = [
         {
             "id": f["id"],
             "airline": f["airline"],
@@ -162,15 +167,21 @@ async def search_flights(
         for f in raw
         if f["seats_available"] > 0
     ]
+    if not results:
+        return "No flights found matching the search criteria."
+    return json.dumps(results, ensure_ascii=False)
 
 
-async def search_hotels(
-    city: str,
-    stars: int | None = None,
-    max_price: float | None = None,
-) -> list[dict[str, Any]]:
-    raw = await _get("/hotels", {"city": city, "stars": stars, "max_price": max_price})
-    return [
+async def execute_search_hotels(input: dict[str, Any]) -> str:
+    city = input.get("city")
+    stars = input.get("stars")
+    max_price = input.get("max_price")
+    try:
+        raw = await _get("/hotels", {"city": city, "stars": stars, "max_price": max_price})
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return "Hotel search is currently unavailable. Please try again."
+
+    results = [
         {
             "id": h["id"],
             "name": h["name"],
@@ -183,14 +194,20 @@ async def search_hotels(
         for h in raw
         if h["rooms_available"] > 0
     ]
+    if not results:
+        return "No hotels found matching the search criteria."
+    return json.dumps(results, ensure_ascii=False)
 
 
-async def search_activities(
-    city: str,
-    category: str | None = None,
-) -> list[dict[str, Any]]:
-    raw = await _get("/activities", {"city": city, "category": category})
-    return [
+async def execute_search_activities(input: dict[str, Any]) -> str:
+    city = input.get("city")
+    category = input.get("category")
+    try:
+        raw = await _get("/activities", {"city": city, "category": category})
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return "Activity search is currently unavailable. Please try again."
+
+    results = [
         {
             "id": a["id"],
             "name": a["name"],
@@ -202,15 +219,21 @@ async def search_activities(
         }
         for a in raw
     ]
+    if not results:
+        return "No activities found matching the search criteria."
+    return json.dumps(results, ensure_ascii=False)
 
 
-async def search_transport(
-    origin: str,
-    destination: str,
-    type: str | None = None,
-) -> list[dict[str, Any]]:
-    raw = await _get("/transport", {"origin": origin, "destination": destination, "type": type})
-    return [
+async def execute_search_transport(input: dict[str, Any]) -> str:
+    origin = input.get("origin")
+    destination = input.get("destination")
+    transport_type = input.get("type")
+    try:
+        raw = await _get("/transport", {"origin": origin, "destination": destination, "type": transport_type})
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return "Transport search is currently unavailable. Please try again."
+
+    results = [
         {
             "id": t["id"],
             "type": t["type"],
@@ -223,20 +246,23 @@ async def search_transport(
         }
         for t in raw
     ]
+    if not results:
+        return "No transport options found matching the search criteria."
+    return json.dumps(results, ensure_ascii=False)
 
 
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
 
-async def execute_tool(name: str, inputs: dict[str, Any]) -> Any:
+async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     """Route a tool call by name to the appropriate async function."""
-    if name == "search_flights":
-        return await search_flights(**inputs)
-    if name == "search_hotels":
-        return await search_hotels(**inputs)
-    if name == "search_activities":
-        return await search_activities(**inputs)
-    if name == "search_transport":
-        return await search_transport(**inputs)
-    raise ValueError(f"Unknown tool: {name}")
+    if tool_name == "search_flights":
+        return await execute_search_flights(tool_input)
+    if tool_name == "search_hotels":
+        return await execute_search_hotels(tool_input)
+    if tool_name == "search_activities":
+        return await execute_search_activities(tool_input)
+    if tool_name == "search_transport":
+        return await execute_search_transport(tool_input)
+    return f"Unknown tool: {tool_name}"
