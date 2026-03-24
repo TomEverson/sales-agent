@@ -1,6 +1,3 @@
-Here's the detailed FR-1 file — save it as `rules/fr-1.md`:
-
-```markdown
 # FR-1: MCP Server — Search Flights
 
 ## Context
@@ -157,4 +154,3 @@ Expected:
 ## When done
 Print: ✅ FR-1 complete
 Do not proceed to FR-2 until all acceptance criteria above are checked.
-```
