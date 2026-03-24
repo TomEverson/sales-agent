@@ -314,6 +314,120 @@ def mock_claude(mocker):
 
 
 @pytest.fixture
+def mock_transport_response():
+    """FR-4: shared sample transport data for tests."""
+    return [
+        {
+            "id": 1,
+            "type": "car",
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+            "departure_time": "2026-03-28T08:00:00",
+            "arrival_time": "2026-03-28T08:45:00",
+            "price": 30.0,
+            "capacity": 4,
+        },
+        {
+            "id": 2,
+            "type": "bus",
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+            "departure_time": "2026-03-28T09:00:00",
+            "arrival_time": "2026-03-28T10:00:00",
+            "price": 5.0,
+            "capacity": 40,
+        },
+        {
+            "id": 3,
+            "type": "ferry",
+            "origin": "Singapore",
+            "destination": "Batam",
+            "departure_time": "2026-03-28T10:00:00",
+            "arrival_time": "2026-03-28T11:00:00",
+            "price": 25.0,
+            "capacity": 60,
+        },
+    ]
+
+
+@pytest.fixture
+def sample_flight():
+    """FR-7: sample PackageFlight for formatting tests."""
+    from package_builder import PackageFlight
+    return PackageFlight(
+        origin="Bangkok",
+        destination="Singapore",
+        airline="AirAsia",
+        class_type="economy",
+        departure_time="Sat 08:00",
+        arrival_time="Sat 09:30",
+        price=85.0,
+    )
+
+
+@pytest.fixture
+def sample_hotel():
+    """FR-7: sample PackageHotel for formatting tests."""
+    from package_builder import PackageHotel
+    return PackageHotel(
+        name="The Singapore Suites",
+        stars=4,
+        price_per_night=120.0,
+        nights=2,
+    )
+
+
+@pytest.fixture
+def sample_activities():
+    """FR-7: sample list of PackageActivity for formatting tests."""
+    from package_builder import PackageActivity
+    return [
+        PackageActivity(name="Gardens by the Bay Tour", price=25.0, duration_hours=3.0),
+        PackageActivity(name="Singapore Food Walk", price=35.0, duration_hours=2.0),
+    ]
+
+
+@pytest.fixture
+def sample_transport():
+    """FR-7: sample PackageTransport for formatting tests."""
+    from package_builder import PackageTransport
+    return PackageTransport(
+        origin="Singapore Airport",
+        destination="Singapore City",
+        type="car",
+        price=30.0,
+    )
+
+
+@pytest.fixture
+def sample_package_with_transport(
+    sample_flight, sample_hotel, sample_activities, sample_transport
+):
+    """FR-7: complete TourPackage with transport for formatting tests."""
+    from package_builder import TourPackage
+    return TourPackage(
+        flight=sample_flight,
+        hotel=sample_hotel,
+        activities=sample_activities,
+        budget=1000.0,
+        transport=sample_transport,
+    )
+
+
+@pytest.fixture
+def sample_package_no_transport(sample_flight, sample_hotel, sample_activities):
+    """FR-7: complete TourPackage without transport for formatting tests."""
+    from package_builder import TourPackage
+    return TourPackage(
+        flight=sample_flight,
+        hotel=sample_hotel,
+        activities=sample_activities,
+        budget=1000.0,
+        transport=None,
+    )
+
+
+@pytest.fixture
 def mock_flight_response():
     """Shared sample flight data for FR-1 tests."""
     return [

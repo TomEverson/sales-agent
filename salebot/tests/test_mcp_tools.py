@@ -14,6 +14,7 @@ from mcp_tools import (
     execute_search_flights,
     execute_search_hotels,
     execute_search_activities,
+    execute_search_transport,
     execute_tool,
 )
 
@@ -393,3 +394,211 @@ class TestExecuteSearchActivities:
         await execute_search_activities({"city": "Singapore", "category": "food"})
         request = route.calls[0].request
         assert "category=food" in str(request.url)
+
+
+# ---------------------------------------------------------------------------
+# TestExecuteSearchTransport — FR-4
+# ---------------------------------------------------------------------------
+
+
+class TestExecuteSearchTransport:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_transport_for_valid_origin_and_destination(
+        self, mock_transport_response
+    ):
+        """FR-4: valid origin and destination returns list of transport from FastAPI."""
+        respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=mock_transport_response)
+        )
+        result = await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+        })
+        import json
+        transport = json.loads(result)
+        assert len(transport) == 3
+        assert transport[0]["type"] == "car"
+
+    @pytest.mark.asyncio
+    async def test_origin_is_required(self):
+        """FR-4: missing origin returns clear error message per spec."""
+        result = await execute_search_transport({"destination": "Singapore City"})
+        assert result == "Origin is required to search for transport."
+
+    @pytest.mark.asyncio
+    async def test_destination_is_required(self):
+        """FR-4: missing destination returns clear error message per spec."""
+        result = await execute_search_transport({"origin": "Singapore Airport"})
+        assert result == "Destination is required to search for transport."
+
+    @pytest.mark.asyncio
+    async def test_both_missing_returns_origin_error_first(self):
+        """FR-4: when both are missing, origin error is returned first per spec."""
+        result = await execute_search_transport({})
+        assert result == "Origin is required to search for transport."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_optional_type_sent_as_param(self, mock_transport_response):
+        """FR-4: type param is included in query only when provided."""
+        route = respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=mock_transport_response)
+        )
+        await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+            "type": "car",
+        })
+        request = route.calls[0].request
+        assert "type=car" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_none_params_not_sent(self):
+        """FR-4: None values must not be sent as query params per spec."""
+        route = respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+        })
+        request = route.calls[0].request
+        assert "type" not in str(request.url)
+        assert "origin=Singapore+Airport" in str(request.url) or "origin=Singapore%20Airport" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_empty_results_returns_message(self):
+        """FR-4: empty list from API returns no transport found message per spec."""
+        respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_transport({
+            "origin": "Tokyo",
+            "destination": "Osaka",
+        })
+        assert result == "No transport found from Tokyo to Osaka."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_error_message_includes_origin_and_destination(self):
+        """FR-4: no results message must include both origin and destination per spec."""
+        respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_search_transport({
+            "origin": "Kuala Lumpur",
+            "destination": "Penang",
+        })
+        assert "Kuala Lumpur" in result
+        assert "Penang" in result
+
+    @pytest.mark.asyncio
+    async def test_server_unreachable_returns_message(self):
+        """FR-4: connection error returns unavailable message per spec."""
+        result = await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+        })
+        assert result == "Transport search is currently unavailable. Please try again."
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_capacity_not_used_for_filtering(self, mock_transport_response):
+        """FR-4: results must not be filtered by capacity per spec."""
+        respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=mock_transport_response)
+        )
+        result = await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+        })
+        import json
+        transport = json.loads(result)
+        # All 3 records returned regardless of capacity (4, 40, 60)
+        assert len(transport) == 3
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_type_filter_ferry(self, mock_transport_response):
+        """FR-4: type ferry is passed correctly as query param."""
+        route = respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=[mock_transport_response[2]])
+        )
+        await execute_search_transport({
+            "origin": "Singapore",
+            "destination": "Batam",
+            "type": "ferry",
+        })
+        request = route.calls[0].request
+        assert "type=ferry" in str(request.url)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_type_filter_car(self, mock_transport_response):
+        """FR-4: type car is passed correctly as query param."""
+        route = respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=[mock_transport_response[0]])
+        )
+        await execute_search_transport({
+            "origin": "Singapore Airport",
+            "destination": "Singapore City",
+            "type": "car",
+        })
+        request = route.calls[0].request
+        assert "type=car" in str(request.url)
+
+
+# ---------------------------------------------------------------------------
+# TestToolsRegistry — FR-4
+# ---------------------------------------------------------------------------
+
+
+class TestToolsRegistry:
+    def test_tools_list_contains_all_four_tools(self):
+        """FR-4: TOOLS list must contain exactly 4 tools after FR-4 per spec."""
+        assert len(TOOLS) == 4
+
+    def test_tools_list_order(self):
+        """FR-4: TOOLS list order must be flights, hotels, activities, transport per spec."""
+        names = [t["name"] for t in TOOLS]
+        assert names == ["search_flights", "search_hotels", "search_activities", "search_transport"]
+
+    def test_all_tool_names_are_correct(self):
+        """FR-4: each tool in TOOLS must have the exact name defined in its spec."""
+        expected = {"search_flights", "search_hotels", "search_activities", "search_transport"}
+        actual = {t["name"] for t in TOOLS}
+        assert actual == expected
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_all_four_tools(self, mock_transport_response):
+        """FR-4: execute_tool must route all 4 tool names without returning unknown tool."""
+        respx.get("http://localhost:8000/flights").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        respx.get("http://localhost:8000/hotels").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        respx.get("http://localhost:8000/activities").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        respx.get("http://localhost:8000/transport").mock(
+            return_value=httpx.Response(200, json=mock_transport_response)
+        )
+        r1 = await execute_tool("search_flights", {"destination": "Singapore"})
+        r2 = await execute_tool("search_hotels", {"city": "Singapore"})
+        r3 = await execute_tool("search_activities", {"city": "Singapore"})
+        r4 = await execute_tool("search_transport", {
+            "origin": "Singapore Airport", "destination": "Singapore City"
+        })
+        for result in (r1, r2, r3, r4):
+            assert "Unknown tool" not in result
+
+    @pytest.mark.asyncio
+    async def test_dispatcher_returns_unknown_for_invalid_tool(self):
+        """FR-4: execute_tool returns unknown tool message for unrecognised tool name."""
+        result = await execute_tool("search_packages", {})
+        assert result == "Unknown tool: search_packages"

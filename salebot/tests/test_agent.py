@@ -230,3 +230,132 @@ class TestRunAgent:
         ))
         result_b = await agent.run_agent(999, "Hello", [])
         assert result_a == result_b
+
+
+# ---------------------------------------------------------------------------
+# TestRunAgentContentSerialisation — FR-13
+# ---------------------------------------------------------------------------
+
+
+class TestRunAgentContentSerialisation:
+    def _tool_response_then_end_turn(self, text="Done"):
+        """Build a tool_use response followed by an end_turn response."""
+        tool_block = MagicMock()
+        tool_block.type = "tool_use"
+        tool_block.id = "t1"
+        tool_block.name = "search_flights"
+        tool_block.input = {"destination": "Singapore"}
+
+        tool_response = MagicMock()
+        tool_response.stop_reason = "tool_use"
+        tool_response.content = [tool_block]
+
+        end_response = MagicMock()
+        end_response.stop_reason = "end_turn"
+        end_response.content = [MagicMock(type="text", text=text)]
+        return tool_response, end_response
+
+    @pytest.mark.asyncio
+    async def test_assistant_message_content_is_list_of_dicts(self, mocker):
+        """FR-13: assistant content blocks in messages list are plain dicts not SDK objects."""
+        tool_resp, end_resp = self._tool_response_then_end_turn()
+        mock_client = MagicMock()
+        mock_client.messages.create = AsyncMock(side_effect=[tool_resp, end_resp])
+        mocker.patch("agent._get_client", return_value=mock_client)
+        mocker.patch("agent.execute_tool", return_value="[]")
+
+        await agent.run_agent(1, "test", [])
+
+        # Second call's messages list must have an assistant entry whose
+        # content is a list of plain dicts
+        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
+        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
+        content = assistant_entry["content"]
+        assert isinstance(content, list)
+        for block in content:
+            assert isinstance(block, dict), f"Expected dict, got {type(block)}"
+
+    @pytest.mark.asyncio
+    async def test_tool_use_block_dict_has_required_keys(self, mocker):
+        """FR-13: serialised tool_use dict has type, id, name, input keys per spec."""
+        tool_resp, end_resp = self._tool_response_then_end_turn()
+        mock_client = MagicMock()
+        mock_client.messages.create = AsyncMock(side_effect=[tool_resp, end_resp])
+        mocker.patch("agent._get_client", return_value=mock_client)
+        mocker.patch("agent.execute_tool", return_value="[]")
+
+        await agent.run_agent(1, "test", [])
+
+        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
+        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
+        tool_dicts = [b for b in assistant_entry["content"] if b.get("type") == "tool_use"]
+        assert len(tool_dicts) == 1
+        td = tool_dicts[0]
+        assert "type" in td
+        assert "id" in td
+        assert "name" in td
+        assert "input" in td
+
+    @pytest.mark.asyncio
+    async def test_text_block_dict_has_required_keys(self, mocker):
+        """FR-13: serialised text dict has type and text keys per spec."""
+        text_block = MagicMock()
+        text_block.type = "text"
+        text_block.text = "Thinking..."
+        tool_block = MagicMock()
+        tool_block.type = "tool_use"
+        tool_block.id = "t1"
+        tool_block.name = "search_flights"
+        tool_block.input = {"destination": "Singapore"}
+
+        tool_resp = MagicMock()
+        tool_resp.stop_reason = "tool_use"
+        tool_resp.content = [text_block, tool_block]
+
+        end_resp = MagicMock()
+        end_resp.stop_reason = "end_turn"
+        end_resp.content = [MagicMock(type="text", text="Done")]
+
+        mock_client = MagicMock()
+        mock_client.messages.create = AsyncMock(side_effect=[tool_resp, end_resp])
+        mocker.patch("agent._get_client", return_value=mock_client)
+        mocker.patch("agent.execute_tool", return_value="[]")
+
+        await agent.run_agent(1, "test", [])
+
+        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
+        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
+        text_dicts = [b for b in assistant_entry["content"] if b.get("type") == "text"]
+        assert len(text_dicts) == 1
+        assert "type" in text_dicts[0]
+        assert "text" in text_dicts[0]
+
+
+# ---------------------------------------------------------------------------
+# TestAgentPublicInterface — FR-13
+# ---------------------------------------------------------------------------
+
+
+class TestAgentPublicInterface:
+    def test_handle_message_does_not_exist(self):
+        """FR-13: handle_message must not exist in agent.py per spec."""
+        assert not hasattr(agent, "handle_message")
+
+    def test_run_agent_loop_does_not_exist(self):
+        """FR-13: _run_agent_loop must not exist in agent.py per spec."""
+        assert not hasattr(agent, "_run_agent_loop")
+
+    def test_run_agent_exists(self):
+        """FR-13: run_agent function must still exist per FR-5 spec."""
+        assert hasattr(agent, "run_agent")
+        assert callable(agent.run_agent)
+
+    def test_execute_tool_call_exists(self):
+        """FR-13: execute_tool_call function must still exist per FR-5 spec."""
+        assert hasattr(agent, "execute_tool_call")
+        assert callable(agent.execute_tool_call)
+
+    def test_load_system_prompt_exists(self):
+        """FR-13: load_system_prompt function must still exist per FR-5 spec."""
+        assert hasattr(agent, "load_system_prompt")
+        assert callable(agent.load_system_prompt)

@@ -232,6 +232,11 @@ async def execute_search_transport(input: dict[str, Any]) -> str:
     origin = input.get("origin")
     destination = input.get("destination")
     transport_type = input.get("type")
+    # FR-4: origin and destination are both required
+    if not origin:
+        return "Origin is required to search for transport."
+    if not destination:
+        return "Destination is required to search for transport."
     try:
         raw = await _get("/transport", {"origin": origin, "destination": destination, "type": transport_type})
     except (httpx.ConnectError, httpx.TimeoutException):
@@ -251,7 +256,7 @@ async def execute_search_transport(input: dict[str, Any]) -> str:
         for t in raw
     ]
     if not results:
-        return "No transport options found matching the search criteria."
+        return f"No transport found from {origin} to {destination}."
     return json.dumps(results, ensure_ascii=False)
 
 
