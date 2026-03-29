@@ -65,3 +65,85 @@ export interface TransportFilters {
   origin?: string
   destination?: string
 }
+
+// Booking response types (returned by server)
+export interface FlightBooking {
+  id: number
+  flight_id: number
+  passenger_name: string
+  contact_email: string
+  booking_reference: string
+  status: string
+  seats_booked: number
+  created_at: string
+}
+
+export interface HotelBooking {
+  id: number
+  hotel_id: number
+  guest_name: string
+  contact_email: string
+  check_in_date: string
+  check_out_date: string
+  nights: number
+  guests: number
+  booking_reference: string
+  status: string
+  created_at: string
+}
+
+export interface ActivityBooking {
+  id: number
+  activity_id: number
+  participant_name: string
+  contact_email: string
+  activity_date: string
+  participants: number
+  booking_reference: string
+  status: string
+  created_at: string
+}
+
+export interface TransportBooking {
+  id: number
+  transport_id: number
+  passenger_name: string
+  contact_email: string
+  passengers: number
+  booking_reference: string
+  status: string
+  created_at: string
+}
+
+// Booking create types (sent to server)
+export interface CreateFlightBooking {
+  flight_id: number
+  passenger_name: string
+  contact_email: string
+  seats_booked: number
+}
+
+export interface CreateHotelBooking {
+  hotel_id: number
+  guest_name: string
+  contact_email: string
+  check_in_date: string
+  check_out_date: string
+  nights: number
+  guests: number
+}
+
+export interface CreateActivityBooking {
+  activity_id: number
+  participant_name: string
+  contact_email: string
+  activity_date: string
+  participants: number
+}
+
+export interface CreateTransportBooking {
+  transport_id: number
+  passenger_name: string
+  contact_email: string
+  passengers: number
+}

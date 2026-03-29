@@ -6,6 +6,7 @@ const links = [
   { to: '/hotels', label: 'Hotels' },
   { to: '/activities', label: 'Activities' },
   { to: '/transport', label: 'Transport' },
+  { to: '/bookings', label: 'Bookings' },
 ]
 
 export default function Navbar() {

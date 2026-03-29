@@ -5,6 +5,7 @@ import Flights from './pages/Flights'
 import Hotels from './pages/Hotels'
 import Activities from './pages/Activities'
 import Transport from './pages/Transport'
+import Bookings from './pages/Bookings'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/hotels" element={<Hotels />} />
           <Route path="/activities" element={<Activities />} />
           <Route path="/transport" element={<Transport />} />
+          <Route path="/bookings" element={<Bookings />} />
         </Routes>
       </main>
     </BrowserRouter>
