@@ -1,12 +1,12 @@
-# FR-2: MCP Server — Search Hotels
+# TB-02: MCP Server — Search Hotels
 
 ## Context
 Read rules/base.md before starting.
 Read rules/server.md to understand the FastAPI backend you are calling.
-Read salebot/mcp_tools.py from FR-1 — you will be adding to this file.
+Read salebot/mcp_tools.py from TB-01 — you will be adding to this file.
 
 ## Dependency
-FR-1 must be complete before starting this story.
+TB-01 must be complete before starting this story.
 TOOLS list and execute_tool dispatcher must already exist in mcp_tools.py.
 
 ---
@@ -71,7 +71,7 @@ Append search_hotels_tool to the existing TOOLS list:
 ```python
 TOOLS = [
     search_flights_tool,
-    search_hotels_tool,   # ← added in FR-2
+    search_hotels_tool,   # ← added in TB-02
 ]
 ```
 
@@ -88,7 +88,7 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
 
 ---
 
-## File structure after FR-2
+## File structure after TB-02
 ```
 salebot/
 ├── mcp_tools.py           ← modified (search_hotels added)
@@ -106,38 +106,38 @@ Add to salebot/tests/test_mcp_tools.py:
 class TestExecuteSearchHotels:
 
     async def test_returns_hotels_for_valid_city(self, respx_mock):
-        """FR-2: valid city returns list of hotels from FastAPI"""
+        """TB-02: valid city returns list of hotels from FastAPI"""
 
     async def test_filters_out_zero_rooms(self, respx_mock):
-        """FR-2: hotels with rooms_available == 0 must be excluded per spec"""
+        """TB-02: hotels with rooms_available == 0 must be excluded per spec"""
 
     async def test_city_is_required(self):
-        """FR-2: missing city returns clear error message per spec"""
+        """TB-02: missing city returns clear error message per spec"""
 
     async def test_optional_stars_sent_as_param(self, respx_mock):
-        """FR-2: stars param is included in query only when provided"""
+        """TB-02: stars param is included in query only when provided"""
 
     async def test_optional_max_price_sent_as_param(self, respx_mock):
-        """FR-2: max_price param is included in query only when provided"""
+        """TB-02: max_price param is included in query only when provided"""
 
     async def test_none_params_not_sent(self, respx_mock):
-        """FR-2: None values must not be sent as query params per spec"""
+        """TB-02: None values must not be sent as query params per spec"""
 
     async def test_empty_results_returns_message(self, respx_mock):
-        """FR-2: empty list from API returns no hotels found message per spec"""
+        """TB-02: empty list from API returns no hotels found message per spec"""
 
     async def test_server_unreachable_returns_message(self, respx_mock):
-        """FR-2: connection error returns unavailable message per spec"""
+        """TB-02: connection error returns unavailable message per spec"""
 
     async def test_error_message_includes_city_name(self, respx_mock):
-        """FR-2: no results message must include the searched city name"""
+        """TB-02: no results message must include the searched city name"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def mock_hotel_response():
-    """FR-2: shared sample hotel data for tests"""
+    """TB-02: shared sample hotel data for tests"""
     return [
         {
             "id": 1,
@@ -220,5 +220,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-2 complete
-Do not proceed to FR-3 until all acceptance criteria above are checked.
+Print: ✅ TB-02 complete
+Do not proceed to TB-03 until all acceptance criteria above are checked.

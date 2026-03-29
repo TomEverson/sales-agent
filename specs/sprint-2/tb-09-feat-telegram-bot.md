@@ -1,14 +1,14 @@
-# FR-9: Telegram Bot — Entry Point
+# TB-09: Telegram Bot — Entry Point
 
 ## Context
 Read rules/base.md before starting.
 Read rules/bot.md to understand the full bot architecture.
-Read salebot/agent.py from FR-5 — bot.py calls run_agent().
-Read salebot/memory.py from FR-6 — bot.py calls get_history(),
+Read salebot/agent.py from TB-05 — bot.py calls run_agent().
+Read salebot/memory.py from TB-06 — bot.py calls get_history(),
 append_message(), append_tool_messages(), and clear_history().
 
 ## Dependency
-FR-5, FR-6, FR-7, and FR-8 must be complete before starting this story.
+TB-05, TB-06, TB-07, and TB-08 must be complete before starting this story.
 All of the following must exist and be working:
 - salebot/agent.py with run_agent()
 - salebot/memory.py with all 5 memory functions
@@ -150,7 +150,7 @@ Log these events:
 
 ---
 
-## File structure after FR-9
+## File structure after TB-09
 ```
 salebot/
 ├── bot.py                      ← created in this story
@@ -175,116 +175,116 @@ Create salebot/tests/test_bot.py:
 class TestEnvironmentValidation:
 
     def test_raises_if_telegram_token_missing(self, monkeypatch):
-        """FR-9: RuntimeError raised if TELEGRAM_BOT_TOKEN not set per spec"""
+        """TB-09: RuntimeError raised if TELEGRAM_BOT_TOKEN not set per spec"""
 
     def test_raises_if_anthropic_key_missing(self, monkeypatch):
-        """FR-9: RuntimeError raised if ANTHROPIC_API_KEY not set per spec"""
+        """TB-09: RuntimeError raised if ANTHROPIC_API_KEY not set per spec"""
 
     def test_telegram_error_message_exact(self, monkeypatch):
-        """FR-9: RuntimeError message matches spec exactly for missing token"""
+        """TB-09: RuntimeError message matches spec exactly for missing token"""
 
     def test_anthropic_error_message_exact(self, monkeypatch):
-        """FR-9: RuntimeError message matches spec exactly for missing key"""
+        """TB-09: RuntimeError message matches spec exactly for missing key"""
 
 
 class TestEscapeMarkdown:
 
     def test_escapes_underscore(self):
-        """FR-9: underscore is escaped with backslash per spec"""
+        """TB-09: underscore is escaped with backslash per spec"""
 
     def test_escapes_asterisk(self):
-        """FR-9: asterisk is escaped with backslash per spec"""
+        """TB-09: asterisk is escaped with backslash per spec"""
 
     def test_escapes_period(self):
-        """FR-9: period is escaped with backslash per spec"""
+        """TB-09: period is escaped with backslash per spec"""
 
     def test_escapes_hyphen(self):
-        """FR-9: hyphen is escaped with backslash per spec"""
+        """TB-09: hyphen is escaped with backslash per spec"""
 
     def test_escapes_all_special_chars(self):
-        """FR-9: all 19 special chars are escaped per spec"""
+        """TB-09: all 19 special chars are escaped per spec"""
 
     def test_plain_text_unchanged(self):
-        """FR-9: text with no special chars is returned unchanged per spec"""
+        """TB-09: text with no special chars is returned unchanged per spec"""
 
     def test_empty_string_unchanged(self):
-        """FR-9: empty string returns empty string per spec"""
+        """TB-09: empty string returns empty string per spec"""
 
 
 class TestStartHandler:
 
     async def test_sends_welcome_message(self, mocker):
-        """FR-9: /start sends welcome message to user per spec"""
+        """TB-09: /start sends welcome message to user per spec"""
 
     async def test_welcome_contains_travelbase(self, mocker):
-        """FR-9: welcome message contains Travelbase name per spec"""
+        """TB-09: welcome message contains Travelbase name per spec"""
 
     async def test_welcome_contains_clear_instruction(self, mocker):
-        """FR-9: welcome message mentions /clear command per spec"""
+        """TB-09: welcome message mentions /clear command per spec"""
 
     async def test_start_not_stored_in_history(self, mocker):
-        """FR-9: /start command is not added to conversation history per spec"""
+        """TB-09: /start command is not added to conversation history per spec"""
 
 
 class TestClearHandler:
 
     async def test_calls_clear_history(self, mocker):
-        """FR-9: /clear calls clear_history with correct user_id per spec"""
+        """TB-09: /clear calls clear_history with correct user_id per spec"""
 
     async def test_sends_confirmation_message(self, mocker):
-        """FR-9: /clear sends confirmation message to user per spec"""
+        """TB-09: /clear sends confirmation message to user per spec"""
 
     async def test_clear_not_stored_in_history(self, mocker):
-        """FR-9: /clear command is not added to conversation history per spec"""
+        """TB-09: /clear command is not added to conversation history per spec"""
 
 
 class TestMessageHandler:
 
     async def test_sends_typing_action(self, mocker):
-        """FR-9: typing action sent before calling agent per spec"""
+        """TB-09: typing action sent before calling agent per spec"""
 
     async def test_calls_run_agent_with_correct_args(self, mocker):
-        """FR-9: run_agent called with user_id, message, and history per spec"""
+        """TB-09: run_agent called with user_id, message, and history per spec"""
 
     async def test_loads_history_before_agent_call(self, mocker):
-        """FR-9: get_history called before run_agent per spec"""
+        """TB-09: get_history called before run_agent per spec"""
 
     async def test_stores_user_message_after_agent(self, mocker):
-        """FR-9: append_message called with user role after agent responds per spec"""
+        """TB-09: append_message called with user role after agent responds per spec"""
 
     async def test_stores_assistant_response_after_agent(self, mocker):
-        """FR-9: append_message called with assistant role after agent responds per spec"""
+        """TB-09: append_message called with assistant role after agent responds per spec"""
 
     async def test_sends_agent_response_to_telegram(self, mocker):
-        """FR-9: agent response is sent back to Telegram user per spec"""
+        """TB-09: agent response is sent back to Telegram user per spec"""
 
     async def test_sends_fallback_on_exception(self, mocker):
-        """FR-9: fallback message sent if any exception occurs per spec"""
+        """TB-09: fallback message sent if any exception occurs per spec"""
 
     async def test_fallback_message_exact(self, mocker):
-        """FR-9: fallback message matches spec exactly"""
+        """TB-09: fallback message matches spec exactly"""
 
     async def test_response_is_escaped_before_sending(self, mocker):
-        """FR-9: escape_markdown applied to agent response before sending per spec"""
+        """TB-09: escape_markdown applied to agent response before sending per spec"""
 
 
 class TestErrorHandler:
 
     async def test_logs_error(self, mocker):
-        """FR-9: error is logged with update and error info per spec"""
+        """TB-09: error is logged with update and error info per spec"""
 
     async def test_sends_message_to_user_when_update_exists(self, mocker):
-        """FR-9: error message sent to user when update is available per spec"""
+        """TB-09: error message sent to user when update is available per spec"""
 
     async def test_does_not_crash_when_update_is_none(self, mocker):
-        """FR-9: error handler does not raise when update is None per spec"""
+        """TB-09: error handler does not raise when update is None per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def mock_update():
-    """FR-9: mock Telegram Update object for handler tests"""
+    """TB-09: mock Telegram Update object for handler tests"""
     from unittest.mock import MagicMock, AsyncMock
     update = MagicMock()
     update.effective_user.id = 12345
@@ -295,7 +295,7 @@ def mock_update():
 
 @pytest.fixture
 def mock_context():
-    """FR-9: mock Telegram CallbackContext for handler tests"""
+    """TB-09: mock Telegram CallbackContext for handler tests"""
     from unittest.mock import MagicMock, AsyncMock
     context = MagicMock()
     context.bot.send_chat_action = AsyncMock()
@@ -305,7 +305,7 @@ def mock_context():
 
 @pytest.fixture
 def mock_env(monkeypatch):
-    """FR-9: set required environment variables for bot tests"""
+    """TB-09: set required environment variables for bot tests"""
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token_123")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test_key_456")
 ```
@@ -345,7 +345,7 @@ def mock_env(monkeypatch):
 - [ ] main() registers all 3 handlers and error handler
 - [ ] Bot starts with: uv run python bot.py
 - [ ] All tests in test_bot.py pass
-- [ ] All previously passing FR-1 through FR-8 tests still pass (no regression)
+- [ ] All previously passing TB-01 through TB-08 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors
 
 ---
@@ -397,5 +397,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-9 complete
-Do not proceed to FR-10 until all acceptance criteria above are checked.
+Print: ✅ TB-09 complete
+Do not proceed to TB-10 until all acceptance criteria above are checked.

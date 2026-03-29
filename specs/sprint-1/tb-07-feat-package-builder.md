@@ -1,13 +1,13 @@
-# FR-7: Package Builder — Format Tour Package
+# TB-07: Package Builder — Format Tour Package
 
 ## Context
 Read rules/base.md before starting.
-Read salebot/agent.py from FR-5 — package_builder.py will be called
+Read salebot/agent.py from TB-05 — package_builder.py will be called
 when Claude has selected items and is ready to present a package.
 Read rules/bot.md to understand how the output is sent to Telegram.
 
 ## Dependency
-FR-5 and FR-6 must be complete before starting this story.
+TB-05 and TB-06 must be complete before starting this story.
 This module is standalone — it has no imports from mcp_tools, agent, or memory.
 
 ---
@@ -156,7 +156,7 @@ It is a separate function so it can be updated independently.
 
 ---
 
-## File structure after FR-7
+## File structure after TB-07
 ```
 salebot/
 ├── agent.py                    ← unchanged
@@ -179,128 +179,128 @@ Create salebot/tests/test_package_builder.py:
 class TestFormatStars:
 
     def test_four_stars(self):
-        """FR-7: 4 stars returns 4 star emoji per spec"""
+        """TB-07: 4 stars returns 4 star emoji per spec"""
 
     def test_five_stars(self):
-        """FR-7: 5 stars returns 5 star emoji per spec"""
+        """TB-07: 5 stars returns 5 star emoji per spec"""
 
     def test_one_star(self):
-        """FR-7: 1 star returns 1 star emoji per spec"""
+        """TB-07: 1 star returns 1 star emoji per spec"""
 
     def test_zero_stars_returns_one(self):
-        """FR-7: 0 or below returns minimum 1 star per spec"""
+        """TB-07: 0 or below returns minimum 1 star per spec"""
 
     def test_six_stars_capped_at_five(self):
-        """FR-7: above 5 is capped at 5 stars per spec"""
+        """TB-07: above 5 is capped at 5 stars per spec"""
 
 
 class TestFormatPrice:
 
     def test_whole_number(self):
-        """FR-7: whole number shows two decimal places per spec"""
+        """TB-07: whole number shows two decimal places per spec"""
 
     def test_decimal_number(self):
-        """FR-7: decimal price is formatted correctly per spec"""
+        """TB-07: decimal price is formatted correctly per spec"""
 
     def test_starts_with_dollar_sign(self):
-        """FR-7: price always starts with dollar sign per spec"""
+        """TB-07: price always starts with dollar sign per spec"""
 
     def test_large_price(self):
-        """FR-7: large price formats correctly per spec"""
+        """TB-07: large price formats correctly per spec"""
 
     def test_zero_price(self):
-        """FR-7: zero formats as $0.00 per spec"""
+        """TB-07: zero formats as $0.00 per spec"""
 
 
 class TestCalculateTotal:
 
     def test_sums_flight_hotel_activities(self):
-        """FR-7: total includes flight, hotel nights, and all activities per spec"""
+        """TB-07: total includes flight, hotel nights, and all activities per spec"""
 
     def test_adds_transport_when_present(self):
-        """FR-7: transport price is added when not None per spec"""
+        """TB-07: transport price is added when not None per spec"""
 
     def test_excludes_transport_when_none(self):
-        """FR-7: transport is not counted when None per spec"""
+        """TB-07: transport is not counted when None per spec"""
 
     def test_hotel_multiplied_by_nights(self):
-        """FR-7: hotel cost is price_per_night multiplied by nights per spec"""
+        """TB-07: hotel cost is price_per_night multiplied by nights per spec"""
 
     def test_multiple_activities_summed(self):
-        """FR-7: all activity prices are summed per spec"""
+        """TB-07: all activity prices are summed per spec"""
 
     def test_rounds_to_two_decimal_places(self):
-        """FR-7: total is rounded to 2 decimal places per spec"""
+        """TB-07: total is rounded to 2 decimal places per spec"""
 
     def test_zero_activities(self):
-        """FR-7: package with no activities calculates correctly per spec"""
+        """TB-07: package with no activities calculates correctly per spec"""
 
 
 class TestFormatPackage:
 
     def test_contains_flight_section(self):
-        """FR-7: output contains flight emoji and header per spec"""
+        """TB-07: output contains flight emoji and header per spec"""
 
     def test_contains_hotel_section(self):
-        """FR-7: output contains hotel emoji and header per spec"""
+        """TB-07: output contains hotel emoji and header per spec"""
 
     def test_contains_activities_section(self):
-        """FR-7: output contains activities emoji and header per spec"""
+        """TB-07: output contains activities emoji and header per spec"""
 
     def test_transport_section_included_when_present(self):
-        """FR-7: transport section appears when transport is not None per spec"""
+        """TB-07: transport section appears when transport is not None per spec"""
 
     def test_transport_section_omitted_when_none(self):
-        """FR-7: entire transport block omitted when transport is None per spec"""
+        """TB-07: entire transport block omitted when transport is None per spec"""
 
     def test_contains_total_line(self):
-        """FR-7: output contains total estimate line per spec"""
+        """TB-07: output contains total estimate line per spec"""
 
     def test_contains_budget_remaining_line(self):
-        """FR-7: output contains budget remaining line per spec"""
+        """TB-07: output contains budget remaining line per spec"""
 
     def test_budget_remaining_negative_when_over_budget(self):
-        """FR-7: budget remaining shown as negative when over budget per spec"""
+        """TB-07: budget remaining shown as negative when over budget per spec"""
 
     def test_activities_are_numbered(self):
-        """FR-7: activities start with 1. 2. 3. numbering per spec"""
+        """TB-07: activities start with 1. 2. 3. numbering per spec"""
 
     def test_duration_whole_number_no_decimal(self):
-        """FR-7: whole hour duration shows as integer not float per spec"""
+        """TB-07: whole hour duration shows as integer not float per spec"""
 
     def test_duration_decimal_shown_as_decimal(self):
-        """FR-7: fractional hour duration shows decimal per spec"""
+        """TB-07: fractional hour duration shows decimal per spec"""
 
     def test_uses_telegram_bold_for_headers(self):
-        """FR-7: section headers wrapped in asterisks for Telegram bold per spec"""
+        """TB-07: section headers wrapped in asterisks for Telegram bold per spec"""
 
     def test_budget_remaining_uses_italic(self):
-        """FR-7: budget remaining line wrapped in underscores for Telegram italic per spec"""
+        """TB-07: budget remaining line wrapped in underscores for Telegram italic per spec"""
 
 
 class TestFormatTweakInvitation:
 
     def test_returns_string(self):
-        """FR-7: format_tweak_invitation returns a string per spec"""
+        """TB-07: format_tweak_invitation returns a string per spec"""
 
     def test_contains_flight_option(self):
-        """FR-7: tweak invitation mentions flight option per spec"""
+        """TB-07: tweak invitation mentions flight option per spec"""
 
     def test_contains_hotel_option(self):
-        """FR-7: tweak invitation mentions hotel option per spec"""
+        """TB-07: tweak invitation mentions hotel option per spec"""
 
     def test_contains_activities_option(self):
-        """FR-7: tweak invitation mentions activities option per spec"""
+        """TB-07: tweak invitation mentions activities option per spec"""
 
     def test_contains_transport_option(self):
-        """FR-7: tweak invitation mentions transport option per spec"""
+        """TB-07: tweak invitation mentions transport option per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def sample_flight():
-    """FR-7: sample PackageFlight for formatting tests"""
+    """TB-07: sample PackageFlight for formatting tests"""
     from package_builder import PackageFlight
     return PackageFlight(
         origin="Bangkok",
@@ -314,7 +314,7 @@ def sample_flight():
 
 @pytest.fixture
 def sample_hotel():
-    """FR-7: sample PackageHotel for formatting tests"""
+    """TB-07: sample PackageHotel for formatting tests"""
     from package_builder import PackageHotel
     return PackageHotel(
         name="The Singapore Suites",
@@ -325,7 +325,7 @@ def sample_hotel():
 
 @pytest.fixture
 def sample_activities():
-    """FR-7: sample list of PackageActivity for formatting tests"""
+    """TB-07: sample list of PackageActivity for formatting tests"""
     from package_builder import PackageActivity
     return [
         PackageActivity(name="Gardens by the Bay Tour", price=25.0, duration_hours=3.0),
@@ -334,7 +334,7 @@ def sample_activities():
 
 @pytest.fixture
 def sample_transport():
-    """FR-7: sample PackageTransport for formatting tests"""
+    """TB-07: sample PackageTransport for formatting tests"""
     from package_builder import PackageTransport
     return PackageTransport(
         origin="Singapore Airport",
@@ -345,7 +345,7 @@ def sample_transport():
 
 @pytest.fixture
 def sample_package_with_transport(sample_flight, sample_hotel, sample_activities, sample_transport):
-    """FR-7: complete TourPackage with transport for formatting tests"""
+    """TB-07: complete TourPackage with transport for formatting tests"""
     from package_builder import TourPackage
     return TourPackage(
         flight=sample_flight,
@@ -357,7 +357,7 @@ def sample_package_with_transport(sample_flight, sample_hotel, sample_activities
 
 @pytest.fixture
 def sample_package_no_transport(sample_flight, sample_hotel, sample_activities):
-    """FR-7: complete TourPackage without transport for formatting tests"""
+    """TB-07: complete TourPackage without transport for formatting tests"""
     from package_builder import TourPackage
     return TourPackage(
         flight=sample_flight,
@@ -400,7 +400,7 @@ def sample_package_no_transport(sample_flight, sample_hotel, sample_activities):
 - [ ] format_tweak_invitation() exists with exact signature
 - [ ] format_tweak_invitation mentions all 4 tweak options
 - [ ] All tests in test_package_builder.py pass
-- [ ] All previously passing FR-1 through FR-6 tests still pass (no regression)
+- [ ] All previously passing TB-01 through TB-06 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors
 
 ---
@@ -490,5 +490,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-7 complete
-Do not proceed to FR-8 until all acceptance criteria above are checked.
+Print: ✅ TB-07 complete
+Do not proceed to TB-08 until all acceptance criteria above are checked.

@@ -1,4 +1,4 @@
-# FR-11: Complete FR-4 Test Coverage — Transport Tests & Fixture
+# TB-11: Complete TB-04 Test Coverage — Transport Tests & Fixture
 
 ## Context
 Read rules/base.md before starting.
@@ -8,7 +8,7 @@ transport tests were never written.
 Read salebot/tests/conftest.py — mock_transport_response fixture is absent.
 
 ## Dependency
-FR-1 through FR-4 source implementation is complete.
+TB-01 through TB-04 source implementation is complete.
 mcp_tools.py already exposes execute_search_transport and all four tools in TOOLS.
 This story adds the missing test coverage only — no source file changes.
 
@@ -16,7 +16,7 @@ This story adds the missing test coverage only — no source file changes.
 
 ## Goal
 Add TestExecuteSearchTransport and TestToolsRegistry test classes to test_mcp_tools.py,
-and add the mock_transport_response fixture to conftest.py, so that FR-4's acceptance
+and add the mock_transport_response fixture to conftest.py, so that TB-04's acceptance
 criteria are fully covered by tests.
 
 ---
@@ -36,7 +36,7 @@ Append to salebot/tests/conftest.py:
 ```python
 @pytest.fixture
 def mock_transport_response():
-    """FR-4: shared sample transport data for tests."""
+    """TB-04: shared sample transport data for tests."""
     return [
         {
             "id": 1,
@@ -87,79 +87,79 @@ class TestExecuteSearchTransport:
     async def test_returns_transport_for_valid_origin_and_destination(
         self, mock_transport_response
     ):
-        """FR-4: valid origin and destination returns list of transport from FastAPI."""
+        """TB-04: valid origin and destination returns list of transport from FastAPI."""
 
     @pytest.mark.asyncio
     async def test_origin_is_required(self):
-        """FR-4: missing origin returns clear error message per spec."""
+        """TB-04: missing origin returns clear error message per spec."""
 
     @pytest.mark.asyncio
     async def test_destination_is_required(self):
-        """FR-4: missing destination returns clear error message per spec."""
+        """TB-04: missing destination returns clear error message per spec."""
 
     @pytest.mark.asyncio
     async def test_both_missing_returns_origin_error_first(self):
-        """FR-4: when both are missing, origin error is returned first per spec."""
+        """TB-04: when both are missing, origin error is returned first per spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_optional_type_sent_as_param(self, mock_transport_response):
-        """FR-4: type param is included in query only when provided."""
+        """TB-04: type param is included in query only when provided."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_none_params_not_sent(self):
-        """FR-4: None values must not be sent as query params per spec."""
+        """TB-04: None values must not be sent as query params per spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_empty_results_returns_message(self):
-        """FR-4: empty list from API returns no transport found message per spec."""
+        """TB-04: empty list from API returns no transport found message per spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_error_message_includes_origin_and_destination(self):
-        """FR-4: no results message must include both origin and destination per spec."""
+        """TB-04: no results message must include both origin and destination per spec."""
 
     @pytest.mark.asyncio
     async def test_server_unreachable_returns_message(self):
-        """FR-4: connection error returns unavailable message per spec."""
+        """TB-04: connection error returns unavailable message per spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_capacity_not_used_for_filtering(self, mock_transport_response):
-        """FR-4: results must not be filtered by capacity per spec."""
+        """TB-04: results must not be filtered by capacity per spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_type_filter_ferry(self, mock_transport_response):
-        """FR-4: type ferry is passed correctly as query param."""
+        """TB-04: type ferry is passed correctly as query param."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_type_filter_car(self, mock_transport_response):
-        """FR-4: type car is passed correctly as query param."""
+        """TB-04: type car is passed correctly as query param."""
 
 
 class TestToolsRegistry:
 
     def test_tools_list_contains_all_four_tools(self):
-        """FR-4: TOOLS list must contain exactly 4 tools after FR-4 per spec."""
+        """TB-04: TOOLS list must contain exactly 4 tools after TB-04 per spec."""
 
     def test_tools_list_order(self):
-        """FR-4: TOOLS list order must be flights, hotels, activities, transport per spec."""
+        """TB-04: TOOLS list order must be flights, hotels, activities, transport per spec."""
 
     def test_all_tool_names_are_correct(self):
-        """FR-4: each tool in TOOLS must have the exact name defined in its spec."""
+        """TB-04: each tool in TOOLS must have the exact name defined in its spec."""
 
     @pytest.mark.asyncio
     @respx.mock
     async def test_dispatcher_routes_all_four_tools(self, mock_transport_response):
-        """FR-4: execute_tool must route all 4 tool names without returning unknown tool."""
+        """TB-04: execute_tool must route all 4 tool names without returning unknown tool."""
 
     @pytest.mark.asyncio
     async def test_dispatcher_returns_unknown_for_invalid_tool(self):
-        """FR-4: execute_tool returns unknown tool message for unrecognised tool name."""
+        """TB-04: execute_tool returns unknown tool message for unrecognised tool name."""
 ```
 
 ---
@@ -239,5 +239,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-11 complete
-Do not proceed to FR-12 until all acceptance criteria above are checked.
+Print: ✅ TB-11 complete
+Do not proceed to TB-12 until all acceptance criteria above are checked.

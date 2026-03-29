@@ -1,4 +1,4 @@
-# FR-1: MCP Server — Search Flights
+# TB-01: MCP Server — Search Flights
 
 ## Context
 Read rules/base.md before starting.
@@ -78,10 +78,10 @@ Expose two things at the bottom of mcp_tools.py:
 # List of all tool definitions (passed to Claude API)
 TOOLS = [
     search_flights_tool,
-    # more tools added in FR-2, FR-3, FR-4
+    # more tools added in TB-02, TB-03, TB-04
 ]
 
-# Dispatcher (called by agent.py in FR-5)
+# Dispatcher (called by agent.py in TB-05)
 async def execute_tool(tool_name: str, tool_input: dict) -> str:
     if tool_name == "search_flights":
         return await execute_search_flights(tool_input)
@@ -90,7 +90,7 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
 
 ---
 
-## File structure after FR-1
+## File structure after TB-01
 ```
 salebot/
 └── mcp_tools.py   ← only file created in this story
@@ -152,5 +152,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-1 complete
-Do not proceed to FR-2 until all acceptance criteria above are checked.
+Print: ✅ TB-01 complete
+Do not proceed to TB-02 until all acceptance criteria above are checked.

@@ -1,8 +1,8 @@
-# FR-10: End-to-End — Full Package Flow
+# TB-10: End-to-End — Full Package Flow
 
 ## Context
 Read rules/base.md before starting.
-Read ALL previous FR files before starting this story.
+Read ALL previous TB files before starting this story.
 Read rules/bot.md for the complete intended architecture.
 
 This is the final story. It does not create new modules.
@@ -11,15 +11,15 @@ and verifies the full user journey works end-to-end.
 
 ## Dependency
 ALL previous stories must be complete and passing:
-- FR-1: search_flights tool ✅
-- FR-2: search_hotels tool ✅
-- FR-3: search_activities tool ✅
-- FR-4: search_transport tool ✅
-- FR-5: agent tool calling loop ✅
-- FR-6: per-user memory ✅
-- FR-7: package builder ✅
-- FR-8: system prompt ✅
-- FR-9: telegram bot entry point ✅
+- TB-01: search_flights tool ✅
+- TB-02: search_hotels tool ✅
+- TB-03: search_activities tool ✅
+- TB-04: search_transport tool ✅
+- TB-05: agent tool calling loop ✅
+- TB-06: per-user memory ✅
+- TB-07: package builder ✅
+- TB-08: system prompt ✅
+- TB-09: telegram bot entry point ✅
 
 Run full test suite before starting:
 ```bash
@@ -70,42 +70,42 @@ class TestPrimaryJourney:
     async def test_full_package_built_from_single_message(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: single user message produces a complete tour package per spec"""
+        """TB-10: single user message produces a complete tour package per spec"""
 
     async def test_package_contains_flight(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: response from run_agent references flight details per spec"""
+        """TB-10: response from run_agent references flight details per spec"""
 
     async def test_package_contains_hotel(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: response from run_agent references hotel details per spec"""
+        """TB-10: response from run_agent references hotel details per spec"""
 
     async def test_package_contains_activity(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: response from run_agent references at least one activity per spec"""
+        """TB-10: response from run_agent references at least one activity per spec"""
 
     async def test_agent_calls_search_flights_tool(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: run_agent triggers search_flights tool call per spec"""
+        """TB-10: run_agent triggers search_flights tool call per spec"""
 
     async def test_agent_calls_search_hotels_tool(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: run_agent triggers search_hotels tool call per spec"""
+        """TB-10: run_agent triggers search_hotels tool call per spec"""
 
     async def test_agent_calls_search_activities_tool(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: run_agent triggers search_activities tool call per spec"""
+        """TB-10: run_agent triggers search_activities tool call per spec"""
 
     async def test_history_saved_after_response(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: conversation history contains user and assistant messages after turn per spec"""
+        """TB-10: conversation history contains user and assistant messages after turn per spec"""
 
 
 class TestTweakJourney:
@@ -113,38 +113,38 @@ class TestTweakJourney:
     async def test_hotel_upgrade_uses_existing_history(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: follow-up tweak passes history to run_agent per spec"""
+        """TB-10: follow-up tweak passes history to run_agent per spec"""
 
     async def test_hotel_upgrade_triggers_new_hotel_search(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: upgrade hotel request triggers search_hotels again per spec"""
+        """TB-10: upgrade hotel request triggers search_hotels again per spec"""
 
     async def test_add_activity_triggers_activity_search(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: add activity request triggers search_activities again per spec"""
+        """TB-10: add activity request triggers search_activities again per spec"""
 
     async def test_full_package_shown_after_tweak(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: complete package returned after tweak not just changed component per spec"""
+        """TB-10: complete package returned after tweak not just changed component per spec"""
 
 
 class TestClearJourney:
 
     async def test_clear_wipes_history(self):
-        """FR-10: clear_history removes all messages for user per spec"""
+        """TB-10: clear_history removes all messages for user per spec"""
 
     async def test_fresh_message_after_clear_has_no_prior_context(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: run_agent after clear receives empty history per spec"""
+        """TB-10: run_agent after clear receives empty history per spec"""
 
     async def test_two_users_have_independent_histories(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: user A history does not affect user B package per spec"""
+        """TB-10: user A history does not affect user B package per spec"""
 
 
 class TestOverBudgetJourney:
@@ -152,12 +152,12 @@ class TestOverBudgetJourney:
     async def test_agent_responds_when_budget_too_low(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: agent returns honest response when budget insufficient per spec"""
+        """TB-10: agent returns honest response when budget insufficient per spec"""
 
     async def test_no_package_presented_when_over_budget(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: over-budget response does not silently present package per spec"""
+        """TB-10: over-budget response does not silently present package per spec"""
 
 
 class TestToolCallIntegration:
@@ -165,29 +165,29 @@ class TestToolCallIntegration:
     async def test_tool_results_appended_to_history(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: tool use and tool result messages stored in memory per spec"""
+        """TB-10: tool use and tool result messages stored in memory per spec"""
 
     async def test_history_cap_respected_across_turns(
         self, mock_fastapi, mock_claude
     ):
-        """FR-10: history never exceeds 20 messages across multiple turns per spec"""
+        """TB-10: history never exceeds 20 messages across multiple turns per spec"""
 
     async def test_fastapi_unreachable_returns_graceful_error(
         self, mock_fastapi_down, mock_claude
     ):
-        """FR-10: unavailable FastAPI returns graceful error message per spec"""
+        """TB-10: unavailable FastAPI returns graceful error message per spec"""
 
     async def test_all_four_tools_reachable_from_agent(
         self, mock_fastapi, mock_claude, mocker
     ):
-        """FR-10: all 4 MCP tools callable from within agent loop per spec"""
+        """TB-10: all 4 MCP tools callable from within agent loop per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def mock_fastapi(respx_mock):
-    """FR-10: mocks all 4 FastAPI endpoints with realistic SEA travel data"""
+    """TB-10: mocks all 4 FastAPI endpoints with realistic SEA travel data"""
     import respx
     import httpx
 
@@ -259,7 +259,7 @@ def mock_fastapi(respx_mock):
 
 @pytest.fixture
 def mock_fastapi_down(respx_mock):
-    """FR-10: mocks all FastAPI endpoints as unreachable"""
+    """TB-10: mocks all FastAPI endpoints as unreachable"""
     import httpx
     respx_mock.get("http://localhost:8000/flights").mock(
         side_effect=httpx.ConnectError("Connection refused")
@@ -277,7 +277,7 @@ def mock_fastapi_down(respx_mock):
 
 @pytest.fixture
 def mock_claude(mocker):
-    """FR-10: mocks Anthropic Claude API for integration tests"""
+    """TB-10: mocks Anthropic Claude API for integration tests"""
     from unittest.mock import MagicMock, AsyncMock
 
     # First call returns tool_use, second call returns end_turn
@@ -320,7 +320,7 @@ This is a standalone script (not pytest) that runs a real end-to-end check
 against live services — FastAPI must be running, Claude API key must be set.
 ```python
 """
-FR-10: Health check script for Travelbase Salebot.
+TB-10: Health check script for Travelbase Salebot.
 Requires:
   - FastAPI server running at http://localhost:8000
   - ANTHROPIC_API_KEY set in .env
@@ -419,7 +419,7 @@ if __name__ == "__main__":
 
 ---
 
-## File structure after FR-10
+## File structure after TB-10
 ```
 salebot/
 ├── bot.py
@@ -526,4 +526,4 @@ Expected final state:
 ---
 
 ## When done
-Print: ✅ FR-10 complete — Travelbase Salebot is ready.
+Print: ✅ TB-10 complete — Travelbase Salebot is ready.

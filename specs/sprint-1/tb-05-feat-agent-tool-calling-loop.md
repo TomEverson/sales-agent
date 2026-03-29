@@ -1,4 +1,4 @@
-# FR-5: Agent Core — Tool Calling Loop
+# TB-05: Agent Core — Tool Calling Loop
 
 ## Context
 Read rules/base.md before starting.
@@ -6,7 +6,7 @@ Read rules/bot.md to understand how the agent will be called from the Telegram b
 Read salebot/mcp_tools.py — all 4 tools must be complete before this story.
 
 ## Dependency
-FR-1, FR-2, FR-3, FR-4 must be complete before starting this story.
+TB-01, TB-02, TB-03, TB-04 must be complete before starting this story.
 TOOLS list and execute_tool dispatcher must exist in mcp_tools.py with all 4 tools.
 
 ---
@@ -21,7 +21,7 @@ and returns that final response to the caller.
 
 ## Files to create
 salebot/agent.py
-salebot/prompts/system_prompt.md  ← placeholder only, full content in FR-8
+salebot/prompts/system_prompt.md  ← placeholder only, full content in TB-08
 
 ---
 
@@ -115,11 +115,11 @@ Use the available tools to search real inventory.
 Never invent prices or availability.
 ```
 
-Full system prompt will be written in FR-8.
+Full system prompt will be written in TB-08.
 
 ---
 
-## File structure after FR-5
+## File structure after TB-05
 ```
 salebot/
 ├── agent.py                    ← created in this story
@@ -140,71 +140,71 @@ Create salebot/tests/test_agent.py:
 class TestLoadSystemPrompt:
 
     def test_returns_string_when_file_exists(self, tmp_path):
-        """FR-5: load_system_prompt returns file content as string per spec"""
+        """TB-05: load_system_prompt returns file content as string per spec"""
 
     def test_returns_fallback_when_file_missing(self):
-        """FR-5: load_system_prompt returns fallback string when file not found per spec"""
+        """TB-05: load_system_prompt returns fallback string when file not found per spec"""
 
     def test_never_raises_exception(self):
-        """FR-5: load_system_prompt must never raise an exception per spec"""
+        """TB-05: load_system_prompt must never raise an exception per spec"""
 
     def test_result_is_cached(self, tmp_path):
-        """FR-5: system prompt file is only read once per process per spec"""
+        """TB-05: system prompt file is only read once per process per spec"""
 
 
 class TestExecuteToolCall:
 
     async def test_routes_to_mcp_execute_tool(self, mocker):
-        """FR-5: execute_tool_call delegates to mcp_tools.execute_tool per spec"""
+        """TB-05: execute_tool_call delegates to mcp_tools.execute_tool per spec"""
 
     async def test_returns_error_string_on_exception(self, mocker):
-        """FR-5: exceptions are caught and returned as error string per spec"""
+        """TB-05: exceptions are caught and returned as error string per spec"""
 
     async def test_error_string_includes_tool_name(self, mocker):
-        """FR-5: error message must include the tool name per spec"""
+        """TB-05: error message must include the tool name per spec"""
 
 
 class TestRunAgent:
 
     async def test_returns_text_on_end_turn(self, mocker):
-        """FR-5: returns extracted text when Claude stop_reason is end_turn per spec"""
+        """TB-05: returns extracted text when Claude stop_reason is end_turn per spec"""
 
     async def test_executes_tool_and_loops_on_tool_use(self, mocker):
-        """FR-5: tool_use stop_reason triggers tool execution and second API call per spec"""
+        """TB-05: tool_use stop_reason triggers tool execution and second API call per spec"""
 
     async def test_executes_multiple_tools_in_one_turn(self, mocker):
-        """FR-5: multiple tool_use blocks in one response are all executed per spec"""
+        """TB-05: multiple tool_use blocks in one response are all executed per spec"""
 
     async def test_returns_error_on_unexpected_stop_reason(self, mocker):
-        """FR-5: unexpected stop_reason returns error string per spec"""
+        """TB-05: unexpected stop_reason returns error string per spec"""
 
     async def test_respects_max_iteration_cap(self, mocker):
-        """FR-5: loop stops after 10 iterations and returns timeout message per spec"""
+        """TB-05: loop stops after 10 iterations and returns timeout message per spec"""
 
     async def test_timeout_message_is_correct(self, mocker):
-        """FR-5: iteration cap message matches spec exactly"""
+        """TB-05: iteration cap message matches spec exactly"""
 
     async def test_appends_assistant_message_after_tool_use(self, mocker):
-        """FR-5: assistant content blocks are appended to messages after tool_use per spec"""
+        """TB-05: assistant content blocks are appended to messages after tool_use per spec"""
 
     async def test_appends_tool_result_message_after_tool_use(self, mocker):
-        """FR-5: tool_result user message is appended after tool execution per spec"""
+        """TB-05: tool_result user message is appended after tool execution per spec"""
 
     async def test_history_is_included_in_first_api_call(self, mocker):
-        """FR-5: existing history is prepended to messages list per spec"""
+        """TB-05: existing history is prepended to messages list per spec"""
 
     async def test_returns_fallback_when_no_text_block(self, mocker):
-        """FR-5: no text block in end_turn response returns fallback message per spec"""
+        """TB-05: no text block in end_turn response returns fallback message per spec"""
 
     async def test_user_id_does_not_affect_output(self, mocker):
-        """FR-5: user_id is used for logging only and does not change return value per spec"""
+        """TB-05: user_id is used for logging only and does not change return value per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def mock_end_turn_response():
-    """FR-5: simulates Claude API response with stop_reason end_turn"""
+    """TB-05: simulates Claude API response with stop_reason end_turn"""
     from unittest.mock import MagicMock
     response = MagicMock()
     response.stop_reason = "end_turn"
@@ -215,7 +215,7 @@ def mock_end_turn_response():
 
 @pytest.fixture
 def mock_tool_use_response():
-    """FR-5: simulates Claude API response with stop_reason tool_use"""
+    """TB-05: simulates Claude API response with stop_reason tool_use"""
     from unittest.mock import MagicMock
     response = MagicMock()
     response.stop_reason = "tool_use"
@@ -229,7 +229,7 @@ def mock_tool_use_response():
 
 @pytest.fixture
 def sample_history():
-    """FR-5: sample conversation history in Anthropic message format"""
+    """TB-05: sample conversation history in Anthropic message format"""
     return [
         {"role": "user", "content": "I want to visit Singapore"},
         {"role": "assistant", "content": "Great choice! What is your budget?"}
@@ -264,7 +264,7 @@ def sample_history():
 - [ ] No text block in end_turn returns "I have no response. Please try again."
 - [ ] salebot/prompts/system_prompt.md exists with placeholder content
 - [ ] All tests in test_agent.py pass
-- [ ] All previously passing FR-1 through FR-4 tests still pass (no regression)
+- [ ] All previously passing TB-01 through TB-04 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors
 
 ---
@@ -311,5 +311,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-5 complete
-Do not proceed to FR-6 until all acceptance criteria above are checked.
+Print: ✅ TB-05 complete
+Do not proceed to TB-06 until all acceptance criteria above are checked.

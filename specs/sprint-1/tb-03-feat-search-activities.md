@@ -1,4 +1,4 @@
-# FR-3: MCP Server — Search Activities
+# TB-03: MCP Server — Search Activities
 
 ## Context
 Read rules/base.md before starting.
@@ -6,7 +6,7 @@ Read rules/server.md to understand the FastAPI backend you are calling.
 Read salebot/mcp_tools.py — you will be adding to this existing file.
 
 ## Dependency
-FR-1 and FR-2 must be complete before starting this story.
+TB-01 and TB-02 must be complete before starting this story.
 TOOLS list and execute_tool dispatcher must already exist in mcp_tools.py
 with search_flights_tool and search_hotels_tool already present.
 
@@ -71,7 +71,7 @@ Append search_activities_tool to the existing TOOLS list:
 TOOLS = [
     search_flights_tool,
     search_hotels_tool,
-    search_activities_tool,   # ← added in FR-3
+    search_activities_tool,   # ← added in TB-03
 ]
 ```
 
@@ -90,7 +90,7 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
 
 ---
 
-## File structure after FR-3
+## File structure after TB-03
 ```
 salebot/
 ├── mcp_tools.py           ← modified (search_activities added)
@@ -108,41 +108,41 @@ Add to salebot/tests/test_mcp_tools.py:
 class TestExecuteSearchActivities:
 
     async def test_returns_activities_for_valid_city(self, respx_mock):
-        """FR-3: valid city returns list of activities from FastAPI"""
+        """TB-03: valid city returns list of activities from FastAPI"""
 
     async def test_city_is_required(self):
-        """FR-3: missing city returns clear error message per spec"""
+        """TB-03: missing city returns clear error message per spec"""
 
     async def test_optional_category_sent_as_param(self, respx_mock):
-        """FR-3: category param is included in query only when provided"""
+        """TB-03: category param is included in query only when provided"""
 
     async def test_none_params_not_sent(self, respx_mock):
-        """FR-3: None values must not be sent as query params per spec"""
+        """TB-03: None values must not be sent as query params per spec"""
 
     async def test_empty_results_returns_message(self, respx_mock):
-        """FR-3: empty list from API returns no activities found message per spec"""
+        """TB-03: empty list from API returns no activities found message per spec"""
 
     async def test_error_message_includes_city_name(self, respx_mock):
-        """FR-3: no results message must include the searched city name"""
+        """TB-03: no results message must include the searched city name"""
 
     async def test_server_unreachable_returns_message(self, respx_mock):
-        """FR-3: connection error returns unavailable message per spec"""
+        """TB-03: connection error returns unavailable message per spec"""
 
     async def test_all_results_returned_regardless_of_availability(self, respx_mock):
-        """FR-3: availability field must not be used to filter results per spec"""
+        """TB-03: availability field must not be used to filter results per spec"""
 
     async def test_category_filter_adventure(self, respx_mock):
-        """FR-3: category adventure is passed correctly as query param"""
+        """TB-03: category adventure is passed correctly as query param"""
 
     async def test_category_filter_food(self, respx_mock):
-        """FR-3: category food is passed correctly as query param"""
+        """TB-03: category food is passed correctly as query param"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def mock_activity_response():
-    """FR-3: shared sample activity data for tests"""
+    """TB-03: shared sample activity data for tests"""
     return [
         {
             "id": 1,
@@ -191,9 +191,9 @@ def mock_activity_response():
 - [ ] Server unreachable returns "Activity search is currently unavailable. Please try again."
 - [ ] search_activities_tool is appended to TOOLS list (now contains 3 tools)
 - [ ] execute_tool dispatcher routes "search_activities" to execute_search_activities
-- [ ] Existing FR-1 and FR-2 routes in dispatcher are untouched
+- [ ] Existing TB-01 and TB-02 routes in dispatcher are untouched
 - [ ] All tests in TestExecuteSearchActivities pass
-- [ ] All previously passing FR-1 and FR-2 tests still pass (no regression)
+- [ ] All previously passing TB-01 and TB-02 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors
 
 ---
@@ -236,10 +236,10 @@ Expected:
 - Test 2: JSON list filtered by food category in Bangkok
 - Test 3: "No activities found in Tokyo matching the search criteria."
 - Test 4: "City is required to search for activities."
-- Test 5: JSON list of flights (confirms no regression from FR-1)
+- Test 5: JSON list of flights (confirms no regression from TB-01)
 
 ---
 
 ## When done
-Print: ✅ FR-3 complete
-Do not proceed to FR-4 until all acceptance criteria above are checked.fr
+Print: ✅ TB-03 complete
+Do not proceed to TB-04 until all acceptance criteria above are checked.

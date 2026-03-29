@@ -1,25 +1,25 @@
-# FR-13: Clean Up agent.py — Remove Dead Code and Fix Content Serialisation
+# TB-13: Clean Up agent.py — Remove Dead Code and Fix Content Serialisation
 
 ## Context
 Read rules/base.md before starting.
-Read docs/fr-5.md — defines exactly which functions should exist in agent.py.
+Read specs/sprint-1/tb-05-agent-tool-calling-loop.md — defines exactly which functions should exist in agent.py.
 Read salebot/agent.py — contains two non-spec functions (handle_message, _run_agent_loop)
 that are never called by bot.py, plus a content serialisation inconsistency in run_agent.
 Read salebot/bot.py — confirms that handle_message is never imported or called;
 only run_agent is used.
 
 ## Dependency
-FR-11 and FR-12 must be complete.
+TB-11 and TB-12 must be complete.
 All tests must be passing before this cleanup story starts:
   uv run pytest tests/ -v   ← must show 0 failures
 
 ---
 
 ## Goal
-Remove handle_message and _run_agent_loop from agent.py (dead code not in FR-5 spec,
+Remove handle_message and _run_agent_loop from agent.py (dead code not in TB-05 spec,
 never called by bot.py). Fix run_agent to serialise Claude API content-block objects
 into plain Python dicts before appending the assistant message to the messages list,
-matching the intent of the FR-5 spec and the correct behaviour already in _run_agent_loop.
+matching the intent of the TB-05 spec and the correct behaviour already in _run_agent_loop.
 
 ---
 
@@ -37,7 +37,7 @@ Delete the entire async def handle_message(user_id: int, user_text: str) -> str 
 
 Why: bot.py calls run_agent and manages memory itself. handle_message is never imported
 or called anywhere in the codebase and contains a redundant memory-management path
-that duplicates bot.py logic. Its presence violates the FR-5 spec which defines only
+that duplicates bot.py logic. Its presence violates the TB-05 spec which defines only
 run_agent as the public entry point.
 
 ### 2. Remove _run_agent_loop from agent.py
@@ -97,33 +97,33 @@ class TestRunAgentContentSerialisation:
 
     @pytest.mark.asyncio
     async def test_assistant_message_content_is_list_of_dicts(self, mocker):
-        """FR-13: assistant content blocks in messages list are plain dicts not SDK objects."""
+        """TB-13: assistant content blocks in messages list are plain dicts not SDK objects."""
 
     @pytest.mark.asyncio
     async def test_tool_use_block_dict_has_required_keys(self, mocker):
-        """FR-13: serialised tool_use dict has type, id, name, input keys per spec."""
+        """TB-13: serialised tool_use dict has type, id, name, input keys per spec."""
 
     @pytest.mark.asyncio
     async def test_text_block_dict_has_required_keys(self, mocker):
-        """FR-13: serialised text dict has type and text keys per spec."""
+        """TB-13: serialised text dict has type and text keys per spec."""
 
 
 class TestAgentPublicInterface:
 
     def test_handle_message_does_not_exist(self):
-        """FR-13: handle_message must not exist in agent.py per spec."""
+        """TB-13: handle_message must not exist in agent.py per spec."""
 
     def test_run_agent_loop_does_not_exist(self):
-        """FR-13: _run_agent_loop must not exist in agent.py per spec."""
+        """TB-13: _run_agent_loop must not exist in agent.py per spec."""
 
     def test_run_agent_exists(self):
-        """FR-13: run_agent function must still exist per FR-5 spec."""
+        """TB-13: run_agent function must still exist per TB-05 spec."""
 
     def test_execute_tool_call_exists(self):
-        """FR-13: execute_tool_call function must still exist per FR-5 spec."""
+        """TB-13: execute_tool_call function must still exist per TB-05 spec."""
 
     def test_load_system_prompt_exists(self):
-        """FR-13: load_system_prompt function must still exist per FR-5 spec."""
+        """TB-13: load_system_prompt function must still exist per TB-05 spec."""
 ```
 
 Note on TestRunAgentContentSerialisation: capture the messages list built inside
@@ -145,7 +145,7 @@ No new fixtures required for this story.
 - [ ] handle_message function no longer exists in agent.py
 - [ ] _run_agent_loop function no longer exists in agent.py
 - [ ] run_agent still exists with exact signature: run_agent(user_id: int, user_message: str, history: list) -> str
-- [ ] execute_tool_call still exists with exact signature per FR-5 spec
+- [ ] execute_tool_call still exists with exact signature per TB-05 spec
 - [ ] load_system_prompt still exists
 - [ ] _get_client still exists
 - [ ] In run_agent, the assistant message appended for tool_use responses contains a list of plain dicts
@@ -200,7 +200,7 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-13 complete — agent.py is clean and spec-compliant.
+Print: ✅ TB-13 complete — agent.py is clean and spec-compliant.
 Run the full test suite one final time to confirm zero failures:
   uv run pytest tests/ -v
   uv run ruff check .

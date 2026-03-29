@@ -1,12 +1,12 @@
-# FR-6: Memory — Per-User Conversation History
+# TB-06: Memory — Per-User Conversation History
 
 ## Context
 Read rules/base.md before starting.
-Read salebot/agent.py from FR-5 — memory.py will be called from here.
+Read salebot/agent.py from TB-05 — memory.py will be called from here.
 Read rules/bot.md to understand how user_id flows from Telegram into the memory system.
 
 ## Dependency
-FR-5 must be complete before starting this story.
+TB-05 must be complete before starting this story.
 run_agent(user_id, user_message, history) must exist in agent.py.
 
 ---
@@ -111,7 +111,7 @@ For append_tool_messages (adds 2 at once):
 
 ---
 
-## File structure after FR-6
+## File structure after TB-06
 ```
 salebot/
 ├── agent.py               ← unchanged
@@ -133,113 +133,113 @@ Create salebot/tests/test_memory.py:
 class TestGetHistory:
 
     def test_returns_empty_list_for_new_user(self):
-        """FR-6: unknown user_id returns empty list per spec"""
+        """TB-06: unknown user_id returns empty list per spec"""
 
     def test_returns_stored_messages(self):
-        """FR-6: stored messages are returned correctly per spec"""
+        """TB-06: stored messages are returned correctly per spec"""
 
     def test_returns_copy_not_reference(self):
-        """FR-6: mutating returned list must not affect internal store per spec"""
+        """TB-06: mutating returned list must not affect internal store per spec"""
 
     def test_returns_empty_list_after_clear(self):
-        """FR-6: get_history returns empty list after clear_history per spec"""
+        """TB-06: get_history returns empty list after clear_history per spec"""
 
 
 class TestAppendMessage:
 
     def test_appends_user_message(self):
-        """FR-6: user role message is appended correctly per spec"""
+        """TB-06: user role message is appended correctly per spec"""
 
     def test_appends_assistant_message(self):
-        """FR-6: assistant role message is appended correctly per spec"""
+        """TB-06: assistant role message is appended correctly per spec"""
 
     def test_creates_new_list_for_new_user(self):
-        """FR-6: new user_id creates a new history list per spec"""
+        """TB-06: new user_id creates a new history list per spec"""
 
     def test_invalid_role_raises_value_error(self):
-        """FR-6: invalid role raises ValueError per spec"""
+        """TB-06: invalid role raises ValueError per spec"""
 
     def test_invalid_role_error_message(self):
-        """FR-6: ValueError message matches spec exactly"""
+        """TB-06: ValueError message matches spec exactly"""
 
     def test_cap_enforced_at_20_messages(self):
-        """FR-6: history never exceeds 20 messages per spec"""
+        """TB-06: history never exceeds 20 messages per spec"""
 
     def test_oldest_messages_dropped_first(self):
-        """FR-6: messages are dropped from front not end per spec"""
+        """TB-06: messages are dropped from front not end per spec"""
 
     def test_cap_drops_correct_number_of_messages(self):
-        """FR-6: exactly enough messages dropped to reach 20 per spec"""
+        """TB-06: exactly enough messages dropped to reach 20 per spec"""
 
     def test_message_format_is_correct(self):
-        """FR-6: stored message has role and content keys per spec"""
+        """TB-06: stored message has role and content keys per spec"""
 
 
 class TestAppendToolMessages:
 
     def test_appends_two_messages(self):
-        """FR-6: append_tool_messages always adds exactly 2 messages per spec"""
+        """TB-06: append_tool_messages always adds exactly 2 messages per spec"""
 
     def test_first_message_is_assistant(self):
-        """FR-6: first appended message has role assistant per spec"""
+        """TB-06: first appended message has role assistant per spec"""
 
     def test_second_message_is_user(self):
-        """FR-6: second appended message has role user per spec"""
+        """TB-06: second appended message has role user per spec"""
 
     def test_assistant_content_is_stored_as_list(self):
-        """FR-6: assistant_content list is stored directly without modification per spec"""
+        """TB-06: assistant_content list is stored directly without modification per spec"""
 
     def test_tool_results_stored_as_content(self):
-        """FR-6: tool_results list stored as content of user message per spec"""
+        """TB-06: tool_results list stored as content of user message per spec"""
 
     def test_cap_enforced_after_appending_two(self):
-        """FR-6: 20 message cap is enforced after both messages are appended per spec"""
+        """TB-06: 20 message cap is enforced after both messages are appended per spec"""
 
     def test_cap_drops_from_front_when_adding_two(self):
-        """FR-6: oldest messages dropped from front when cap exceeded by 2 per spec"""
+        """TB-06: oldest messages dropped from front when cap exceeded by 2 per spec"""
 
 
 class TestClearHistory:
 
     def test_clears_existing_history(self):
-        """FR-6: clear_history removes all messages for user_id per spec"""
+        """TB-06: clear_history removes all messages for user_id per spec"""
 
     def test_clear_nonexistent_user_does_nothing(self):
-        """FR-6: clear_history on unknown user_id does not raise per spec"""
+        """TB-06: clear_history on unknown user_id does not raise per spec"""
 
     def test_clear_does_not_affect_other_users(self):
-        """FR-6: clearing one user does not affect another user's history per spec"""
+        """TB-06: clearing one user does not affect another user's history per spec"""
 
 
 class TestGetHistoryLength:
 
     def test_returns_zero_for_new_user(self):
-        """FR-6: unknown user_id returns 0 per spec"""
+        """TB-06: unknown user_id returns 0 per spec"""
 
     def test_returns_correct_count(self):
-        """FR-6: returns exact number of stored messages per spec"""
+        """TB-06: returns exact number of stored messages per spec"""
 
     def test_returns_zero_after_clear(self):
-        """FR-6: returns 0 after clear_history per spec"""
+        """TB-06: returns 0 after clear_history per spec"""
 
     def test_returns_max_20_after_cap(self):
-        """FR-6: never returns more than 20 per spec"""
+        """TB-06: never returns more than 20 per spec"""
 
 
 class TestIsolation:
 
     def test_different_users_have_independent_histories(self):
-        """FR-6: two user_ids store and retrieve independent histories per spec"""
+        """TB-06: two user_ids store and retrieve independent histories per spec"""
 
     def test_store_is_module_level_dict(self):
-        """FR-6: _store is a dict at module level per spec"""
+        """TB-06: _store is a dict at module level per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture(autouse=True)
 def clear_memory_store():
-    """FR-6: reset the memory store before each test to ensure isolation"""
+    """TB-06: reset the memory store before each test to ensure isolation"""
     from memory import _store
     _store.clear()
     yield
@@ -247,17 +247,17 @@ def clear_memory_store():
 
 @pytest.fixture
 def user_id_a():
-    """FR-6: sample user_id for primary test user"""
+    """TB-06: sample user_id for primary test user"""
     return 111111
 
 @pytest.fixture
 def user_id_b():
-    """FR-6: sample user_id for secondary test user (isolation tests)"""
+    """TB-06: sample user_id for secondary test user (isolation tests)"""
     return 222222
 
 @pytest.fixture
 def sample_messages():
-    """FR-6: list of sample messages for populating history in tests"""
+    """TB-06: list of sample messages for populating history in tests"""
     return [
         {"role": "user", "content": f"Message {i}"}
         for i in range(25)
@@ -293,7 +293,7 @@ def sample_messages():
 - [ ] Two different user_ids have fully independent histories
 - [ ] autouse fixture in conftest.py clears _store before each test
 - [ ] All tests in test_memory.py pass
-- [ ] All previously passing FR-1 through FR-5 tests still pass (no regression)
+- [ ] All previously passing TB-01 through TB-05 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors
 
 ---
@@ -372,5 +372,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-6 complete
-Do not proceed to FR-7 until all acceptance criteria above are checked.
+Print: ✅ TB-06 complete
+Do not proceed to TB-07 until all acceptance criteria above are checked.

@@ -1,15 +1,15 @@
-# FR-8: System Prompt — Agent Personality & Rules
+# TB-08: System Prompt — Agent Personality & Rules
 
 ## Context
 Read rules/base.md before starting.
-Read salebot/agent.py from FR-5 — system_prompt.md is loaded by load_system_prompt().
-Read salebot/package_builder.py from FR-7 — the prompt must reference
+Read salebot/agent.py from TB-05 — system_prompt.md is loaded by load_system_prompt().
+Read salebot/package_builder.py from TB-07 — the prompt must reference
 the exact package structure the agent is expected to produce.
 Read rules/bot.md to understand the Telegram context the agent operates in.
 
 ## Dependency
-FR-5 must be complete before this story.
-salebot/prompts/system_prompt.md must already exist as a placeholder from FR-5.
+TB-05 must be complete before this story.
+salebot/prompts/system_prompt.md must already exist as a placeholder from TB-05.
 This story replaces that placeholder with the full production prompt.
 
 ---
@@ -223,7 +223,7 @@ Never show only the changed component — always show the full package.
 
 ---
 
-## File structure after FR-8
+## File structure after TB-08
 ```
 salebot/
 ├── agent.py                    ← unchanged
@@ -246,95 +246,95 @@ Create salebot/tests/test_system_prompt.py:
 class TestSystemPromptExists:
 
     def test_file_exists(self):
-        """FR-8: system_prompt.md must exist at correct path per spec"""
+        """TB-08: system_prompt.md must exist at correct path per spec"""
 
     def test_file_is_not_empty(self):
-        """FR-8: system_prompt.md must not be empty per spec"""
+        """TB-08: system_prompt.md must not be empty per spec"""
 
     def test_file_is_not_placeholder(self):
-        """FR-8: file must not contain only the FR-5 placeholder content per spec"""
+        """TB-08: file must not contain only the TB-05 placeholder content per spec"""
 
 
 class TestSystemPromptSections:
 
     def test_contains_identity_section(self):
-        """FR-8: prompt contains identity and role definition per spec"""
+        """TB-08: prompt contains identity and role definition per spec"""
 
     def test_contains_travelbase_name(self):
-        """FR-8: prompt references Travelbase as the platform name per spec"""
+        """TB-08: prompt references Travelbase as the platform name per spec"""
 
     def test_contains_extraction_rules(self):
-        """FR-8: prompt contains all 4 extraction rules per spec"""
+        """TB-08: prompt contains all 4 extraction rules per spec"""
 
     def test_requires_destination(self):
-        """FR-8: prompt instructs agent to ask for destination if missing per spec"""
+        """TB-08: prompt instructs agent to ask for destination if missing per spec"""
 
     def test_requires_budget(self):
-        """FR-8: prompt marks budget as required per spec"""
+        """TB-08: prompt marks budget as required per spec"""
 
     def test_defaults_travelers_to_one(self):
-        """FR-8: prompt defaults number of travelers to 1 per spec"""
+        """TB-08: prompt defaults number of travelers to 1 per spec"""
 
     def test_contains_search_strategy(self):
-        """FR-8: prompt contains search order instructions per spec"""
+        """TB-08: prompt contains search order instructions per spec"""
 
     def test_search_order_flights_first(self):
-        """FR-8: search strategy lists flights as first search per spec"""
+        """TB-08: search strategy lists flights as first search per spec"""
 
     def test_search_order_hotels_second(self):
-        """FR-8: search strategy lists hotels as second search per spec"""
+        """TB-08: search strategy lists hotels as second search per spec"""
 
     def test_search_order_activities_third(self):
-        """FR-8: search strategy lists activities as third search per spec"""
+        """TB-08: search strategy lists activities as third search per spec"""
 
     def test_contains_package_assembly_rules(self):
-        """FR-8: prompt contains package assembly rules per spec"""
+        """TB-08: prompt contains package assembly rules per spec"""
 
     def test_minimum_one_activity_rule(self):
-        """FR-8: prompt states minimum 1 activity required per spec"""
+        """TB-08: prompt states minimum 1 activity required per spec"""
 
     def test_contains_seats_available_rule(self):
-        """FR-8: prompt instructs agent to filter seats_available == 0 per spec"""
+        """TB-08: prompt instructs agent to filter seats_available == 0 per spec"""
 
     def test_contains_rooms_available_rule(self):
-        """FR-8: prompt instructs agent to filter rooms_available == 0 per spec"""
+        """TB-08: prompt instructs agent to filter rooms_available == 0 per spec"""
 
     def test_contains_refinement_rules(self):
-        """FR-8: prompt contains tweak and refinement handling per spec"""
+        """TB-08: prompt contains tweak and refinement handling per spec"""
 
     def test_contains_tweak_invitation_rule(self):
-        """FR-8: prompt instructs agent to always end with tweak invitation per spec"""
+        """TB-08: prompt instructs agent to always end with tweak invitation per spec"""
 
     def test_contains_hard_rules_section(self):
-        """FR-8: prompt contains hard NEVER/ALWAYS rules per spec"""
+        """TB-08: prompt contains hard NEVER/ALWAYS rules per spec"""
 
     def test_never_invent_prices_rule(self):
-        """FR-8: prompt contains rule to never invent prices per spec"""
+        """TB-08: prompt contains rule to never invent prices per spec"""
 
     def test_contains_tone_guide(self):
-        """FR-8: prompt contains tone and style guidance per spec"""
+        """TB-08: prompt contains tone and style guidance per spec"""
 
     def test_no_certainly_phrase(self):
-        """FR-8: prompt explicitly bans Certainly! per spec"""
+        """TB-08: prompt explicitly bans Certainly! per spec"""
 
     def test_default_origin_is_bangkok(self):
-        """FR-8: prompt sets Bangkok as default origin city per spec"""
+        """TB-08: prompt sets Bangkok as default origin city per spec"""
 
 
 class TestSystemPromptLoadedByAgent:
 
     def test_agent_loads_system_prompt(self):
-        """FR-8: load_system_prompt() in agent.py returns full prompt not placeholder"""
+        """TB-08: load_system_prompt() in agent.py returns full prompt not placeholder"""
 
     def test_prompt_length_is_substantial(self):
-        """FR-8: loaded prompt must be at least 1000 characters per spec"""
+        """TB-08: loaded prompt must be at least 1000 characters per spec"""
 ```
 
 Add to conftest.py:
 ```python
 @pytest.fixture
 def system_prompt_content():
-    """FR-8: loads the full system prompt from file for content tests"""
+    """TB-08: loads the full system prompt from file for content tests"""
     from pathlib import Path
     prompt_path = Path(__file__).parent.parent / "prompts" / "system_prompt.md"
     if prompt_path.exists():
@@ -343,7 +343,7 @@ def system_prompt_content():
 
 @pytest.fixture
 def placeholder_content():
-    """FR-8: the FR-5 placeholder text to check against"""
+    """TB-08: the TB-05 placeholder text to check against"""
     return "You are Travelbase Assistant, a friendly travel sales agent.\nHelp users find flights, hotels, activities, and transport for their trips.\nUse the available tools to search real inventory.\nNever invent prices or availability."
 ```
 
@@ -352,7 +352,7 @@ def placeholder_content():
 ## Acceptance Criteria
 
 - [ ] salebot/prompts/system_prompt.md is overwritten with full content
-- [ ] File is not empty and not the FR-5 placeholder
+- [ ] File is not empty and not the TB-05 placeholder
 - [ ] File contains all 8 sections in the correct order
 - [ ] Section 1: identity mentions Travelbase and Southeast Asia
 - [ ] Section 2: all 4 extraction items covered (destination, dates, budget, travelers)
@@ -374,7 +374,7 @@ def placeholder_content():
 - [ ] load_system_prompt() in agent.py returns the full prompt (not fallback)
 - [ ] Loaded prompt is at least 1000 characters
 - [ ] All tests in test_system_prompt.py pass
-- [ ] All previously passing FR-1 through FR-7 tests still pass (no regression)
+- [ ] All previously passing TB-01 through TB-07 tests still pass (no regression)
 - [ ] uv run ruff check . passes with no errors (no Python changes in this story)
 
 ---
@@ -423,5 +423,5 @@ Expected:
 ---
 
 ## When done
-Print: ✅ FR-8 complete
-Do not proceed to FR-9 until all acceptance criteria above are checked.
+Print: ✅ TB-08 complete
+Do not proceed to TB-09 until all acceptance criteria above are checked.
