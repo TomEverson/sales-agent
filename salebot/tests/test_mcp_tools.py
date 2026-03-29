@@ -145,8 +145,11 @@ class TestExecuteSearchFlights:
         assert result == "No flights found matching the search criteria."
 
     @pytest.mark.asyncio
-    async def test_search_flights_server_unreachable_message(self):
+    async def test_search_flights_server_unreachable_message(self, respx_mock):
         """FR-1: returns graceful message when FastAPI is unreachable (no exception raised)."""
+        respx_mock.get("http://localhost:8000/flights").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
         result = await execute_search_flights({"destination": "Singapore"})
         assert result == "Flight search is currently unavailable. Please try again."
 
@@ -286,8 +289,11 @@ class TestExecuteSearchHotels:
         assert result == "No hotels found in Tokyo matching the search criteria."
 
     @pytest.mark.asyncio
-    async def test_server_unreachable_returns_message(self):
+    async def test_server_unreachable_returns_message(self, respx_mock):
         """FR-2: connection error returns unavailable message per spec."""
+        respx_mock.get("http://localhost:8000/hotels").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
         result = await execute_search_hotels({"city": "Singapore"})
         assert result == "Hotel search is currently unavailable. Please try again."
 
@@ -371,8 +377,11 @@ class TestExecuteSearchActivities:
         assert "Nairobi" in result
 
     @pytest.mark.asyncio
-    async def test_server_unreachable_returns_message(self):
+    async def test_server_unreachable_returns_message(self, respx_mock):
         """FR-3: connection error returns unavailable message per spec."""
+        respx_mock.get("http://localhost:8000/activities").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
         result = await execute_search_activities({"city": "Singapore"})
         assert result == "Activity search is currently unavailable. Please try again."
 
@@ -528,8 +537,11 @@ class TestExecuteSearchTransport:
         assert "Penang" in result
 
     @pytest.mark.asyncio
-    async def test_server_unreachable_returns_message(self):
+    async def test_server_unreachable_returns_message(self, respx_mock):
         """FR-4: connection error returns unavailable message per spec."""
+        respx_mock.get("http://localhost:8000/transport").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
         result = await execute_search_transport(
             {
                 "origin": "Singapore Airport",
@@ -598,19 +610,25 @@ class TestExecuteSearchTransport:
 
 
 class TestToolsRegistry:
-    def test_tools_list_contains_all_four_tools(self):
-        """FR-4: TOOLS list must contain exactly 4 tools after FR-4 per spec."""
-        assert len(TOOLS) == 4
+    def test_tools_list_contains_all_tools(self):
+        """FR-4: TOOLS list must contain all 8 tools (4 search + 4 booking)."""
+        assert len(TOOLS) == 8
 
-    def test_tools_list_order(self):
-        """FR-4: TOOLS list order must be flights, hotels, activities, transport per spec."""
+    def test_tools_list_has_search_tools(self):
+        """FR-4: TOOLS list must include the 4 search tools."""
         names = [t["name"] for t in TOOLS]
-        assert names == [
-            "search_flights",
-            "search_hotels",
-            "search_activities",
-            "search_transport",
-        ]
+        assert "search_flights" in names
+        assert "search_hotels" in names
+        assert "search_activities" in names
+        assert "search_transport" in names
+
+    def test_tools_list_has_booking_tools(self):
+        """TB-14-17: TOOLS list must include the 4 booking tools."""
+        names = [t["name"] for t in TOOLS]
+        assert "book_flight" in names
+        assert "book_hotel" in names
+        assert "book_activity" in names
+        assert "book_transport" in names
 
     def test_all_tool_names_are_correct(self):
         """FR-4: each tool in TOOLS must have the exact name defined in its spec."""
@@ -619,6 +637,10 @@ class TestToolsRegistry:
             "search_hotels",
             "search_activities",
             "search_transport",
+            "book_flight",
+            "book_hotel",
+            "book_activity",
+            "book_transport",
         }
         actual = {t["name"] for t in TOOLS}
         assert actual == expected

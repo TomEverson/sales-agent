@@ -1,7 +1,7 @@
 """TB-24: Server flights API tests."""
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from models.flight import Flight
 from tests.conftest import test_engine

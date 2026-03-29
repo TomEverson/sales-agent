@@ -1,7 +1,7 @@
 """TB-24: Server transport API tests."""
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from models.transport import Transport
 from tests.conftest import test_engine

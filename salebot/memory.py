@@ -5,6 +5,9 @@ MAX_MESSAGES = 20
 # In-memory store: user_id (int) → list of message dicts
 _store: dict[int, list[dict[str, Any]]] = {}
 
+# Language preference store: user_id (int) → "en" | "my"
+_language_prefs: dict[int, str] = {}
+
 
 def _enforce_cap(user_id: int) -> None:
     history = _store[user_id]
@@ -41,10 +44,28 @@ def append_tool_messages(
 
 
 def clear_history(user_id: int) -> None:
-    """Clear the conversation history for a user."""
+    """Clear the conversation history and language preference for a user."""
     _store.pop(user_id, None)
+    _language_prefs.pop(user_id, None)
 
 
 def get_history_length(user_id: int) -> int:
     """Return the number of stored messages for a user."""
     return len(_store.get(user_id, []))
+
+
+def set_language(user_id: int, lang: str) -> None:
+    """Set the language preference for a user. Must be 'en' or 'my'."""
+    if lang not in ("en", "my"):
+        raise ValueError("lang must be 'en' or 'my'")
+    _language_prefs[user_id] = lang
+
+
+def get_language(user_id: int) -> str | None:
+    """Return 'en', 'my', or None if not yet set."""
+    return _language_prefs.get(user_id)
+
+
+def clear_language(user_id: int) -> None:
+    """Remove the language preference for a user."""
+    _language_prefs.pop(user_id, None)

@@ -1,12 +1,10 @@
 """TB-23: Server booking tests."""
 
 import re
-import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from models.flight import Flight
 from models.hotel import Hotel
-from models.activity import Activity
 from models.transport import Transport
 from tests.conftest import test_engine
 

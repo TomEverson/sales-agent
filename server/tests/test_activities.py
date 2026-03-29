@@ -1,7 +1,7 @@
 """TB-24: Server activities API tests."""
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from models.activity import Activity
 from tests.conftest import test_engine

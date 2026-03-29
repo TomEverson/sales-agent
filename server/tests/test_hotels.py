@@ -1,7 +1,7 @@
 """TB-24: Server hotels API tests."""
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from models.hotel import Hotel
 from tests.conftest import test_engine

@@ -96,21 +96,29 @@ class TestStartHandler:
     async def test_sends_welcome_message(self, mock_update, mock_context):
         """FR-9: /start sends welcome message to user per spec."""
         await bot.start_handler(mock_update, mock_context)
-        mock_update.message.reply_text.assert_called_once()
+        mock_update.message.reply_text.assert_called()
 
     @pytest.mark.asyncio
     async def test_welcome_contains_travelbase(self, mock_update, mock_context):
         """FR-9: welcome message contains Travelbase name per spec."""
         await bot.start_handler(mock_update, mock_context)
-        call_args = mock_update.message.reply_text.call_args[0][0]
+        call_args = mock_update.message.reply_text.call_args_list[0][0][0]
         assert "Travelbase" in call_args
 
     @pytest.mark.asyncio
     async def test_welcome_contains_clear_instruction(self, mock_update, mock_context):
         """FR-9: welcome message mentions /clear command per spec."""
         await bot.start_handler(mock_update, mock_context)
-        call_args = mock_update.message.reply_text.call_args[0][0]
+        call_args = mock_update.message.reply_text.call_args_list[0][0][0]
         assert "/clear" in call_args
+
+    @pytest.mark.asyncio
+    async def test_sends_language_selection(self, mock_update, mock_context):
+        """TB-25: /start also sends language selection keyboard."""
+        await bot.start_handler(mock_update, mock_context)
+        assert mock_update.message.reply_text.call_count >= 2
+        call_args = mock_update.message.reply_text.call_args_list[1]
+        assert "language" in call_args[0][0].lower() or "ဘာသာ" in call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_start_not_stored_in_history(self, mock_update, mock_context, mocker):
@@ -167,24 +175,35 @@ class TestMessageHandler:
         mock_context.bot.send_chat_action.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_calls_run_agent_with_correct_args(self, mock_update, mock_context, mocker):
-        """FR-9: run_agent called with user_id, message, and history per spec."""
+    async def test_calls_run_agent_with_correct_args(
+        self, mock_update, mock_context, mocker
+    ):
+        """FR-9: run_agent called with user_id, message, history, and lang per spec."""
+        mocker.patch("bot.get_language", return_value="en")
         history = [{"role": "user", "content": "prev"}]
         mocker.patch("bot.get_history", return_value=history)
-        mock_agent = mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="OK")
+        mock_agent = mocker.patch(
+            "bot.run_agent", new_callable=AsyncMock, return_value="OK"
+        )
         mocker.patch("bot.append_message")
         await bot.message_handler(mock_update, mock_context)
         mock_agent.assert_called_once_with(
             mock_update.effective_user.id,
             mock_update.message.text,
             history,
+            lang="en",
         )
 
     @pytest.mark.asyncio
-    async def test_loads_history_before_agent_call(self, mock_update, mock_context, mocker):
+    async def test_loads_history_before_agent_call(
+        self, mock_update, mock_context, mocker
+    ):
         """FR-9: get_history called before run_agent per spec."""
         call_order = []
-        mocker.patch("bot.get_history", side_effect=lambda uid: call_order.append("get_history") or [])
+        mocker.patch(
+            "bot.get_history",
+            side_effect=lambda uid: call_order.append("get_history") or [],
+        )
         mocker.patch(
             "bot.run_agent",
             new_callable=AsyncMock,
@@ -195,7 +214,9 @@ class TestMessageHandler:
         assert call_order.index("get_history") < call_order.index("run_agent")
 
     @pytest.mark.asyncio
-    async def test_stores_user_message_after_agent(self, mock_update, mock_context, mocker):
+    async def test_stores_user_message_after_agent(
+        self, mock_update, mock_context, mocker
+    ):
         """FR-9: append_message called with user role after agent responds per spec."""
         mocker.patch("bot.get_history", return_value=[])
         mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="Response!")
@@ -205,7 +226,9 @@ class TestMessageHandler:
         assert any(c[1] == "user" for c in calls)
 
     @pytest.mark.asyncio
-    async def test_stores_assistant_response_after_agent(self, mock_update, mock_context, mocker):
+    async def test_stores_assistant_response_after_agent(
+        self, mock_update, mock_context, mocker
+    ):
         """FR-9: append_message called with assistant role after agent responds per spec."""
         mocker.patch("bot.get_history", return_value=[])
         mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="Response!")
@@ -215,10 +238,16 @@ class TestMessageHandler:
         assert any(c[1] == "assistant" for c in calls)
 
     @pytest.mark.asyncio
-    async def test_sends_agent_response_to_telegram(self, mock_update, mock_context, mocker):
+    async def test_sends_agent_response_to_telegram(
+        self, mock_update, mock_context, mocker
+    ):
         """FR-9: agent response is sent back to Telegram user per spec."""
         mocker.patch("bot.get_history", return_value=[])
-        mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="Here is your package!")
+        mocker.patch(
+            "bot.run_agent",
+            new_callable=AsyncMock,
+            return_value="Here is your package!",
+        )
         mocker.patch("bot.append_message")
         await bot.message_handler(mock_update, mock_context)
         mock_update.message.reply_text.assert_called_once()
@@ -239,7 +268,9 @@ class TestMessageHandler:
         assert msg == "Sorry, something went wrong. Please try again in a moment."
 
     @pytest.mark.asyncio
-    async def test_response_is_escaped_before_sending(self, mock_update, mock_context, mocker):
+    async def test_response_is_escaped_before_sending(
+        self, mock_update, mock_context, mocker
+    ):
         """FR-9: escape_markdown applied to agent response before sending per spec."""
         raw_response = "Price: $100.00 — great_deal!"
         mocker.patch("bot.get_history", return_value=[])
@@ -264,9 +295,12 @@ class TestErrorHandler:
         mock_log.error.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_sends_message_to_user_when_update_exists(self, mock_update, mock_context):
+    async def test_sends_message_to_user_when_update_exists(
+        self, mock_update, mock_context
+    ):
         """FR-9: error message sent to user when update is available per spec."""
         from telegram import Update as TelegramUpdate
+
         mock_update.__class__ = TelegramUpdate
         mock_update.effective_message.reply_text = AsyncMock()
         await bot.error_handler(mock_update, mock_context)

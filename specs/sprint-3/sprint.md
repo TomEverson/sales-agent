@@ -25,6 +25,14 @@ Add a flight booking system — users can purchase flight tickets directly throu
 | TB-15  | Hotel Booking — Reserve a Hotel Room | [ ] todo |
 | TB-16  | Activity Booking — Book an Activity | [ ] todo |
 | TB-17  | Transport Booking — Book a Transport Option | [ ] todo |
+| TB-25  | Burmese Language Support — Ask Preference + Auto-Detect | [ ] todo |
+
+**Tests**
+
+| Ticket | Title | Status |
+|--------|-------|--------|
+| TB-23  | Booking Tests — Server & Bot Test Coverage | [ ] todo |
+| TB-24  | E2E Tests — End-to-End Coverage | [ ] todo |
 
 **Client UI**
 

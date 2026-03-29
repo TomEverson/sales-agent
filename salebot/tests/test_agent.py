@@ -18,7 +18,7 @@ import agent
 
 def _reset_prompt_cache():
     """Reset module-level prompt cache so each test starts clean."""
-    agent._system_prompt = None
+    agent._prompt_cache.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -35,30 +35,32 @@ class TestLoadSystemPrompt:
 
     def test_returns_string_when_file_exists(self):
         """FR-5: load_system_prompt returns file content as string per spec."""
-        result = agent.load_system_prompt()
+        result = agent.load_system_prompt("en")
         assert isinstance(result, str)
         assert len(result) > 0
 
     def test_returns_fallback_when_file_missing(self, mocker):
         """FR-5: load_system_prompt returns fallback string when file not found per spec."""
         mocker.patch("pathlib.Path.read_text", side_effect=FileNotFoundError)
-        result = agent.load_system_prompt()
+        result = agent.load_system_prompt("en")
         assert result == "You are Travelbase Assistant, a helpful travel sales agent."
 
     def test_never_raises_exception(self, mocker):
         """FR-5: load_system_prompt must never raise an exception per spec."""
         mocker.patch("pathlib.Path.read_text", side_effect=PermissionError("denied"))
         try:
-            result = agent.load_system_prompt()
+            result = agent.load_system_prompt("en")
         except Exception:
             pytest.fail("load_system_prompt raised an exception")
         assert isinstance(result, str)
 
     def test_result_is_cached(self, mocker):
         """FR-5: system prompt file is only read once per process per spec."""
-        mock_read = mocker.patch("pathlib.Path.read_text", return_value="cached content")
-        agent.load_system_prompt()
-        agent.load_system_prompt()
+        mock_read = mocker.patch(
+            "pathlib.Path.read_text", return_value="cached content"
+        )
+        agent.load_system_prompt("en")
+        agent.load_system_prompt("en")
         assert mock_read.call_count == 1
 
 
@@ -71,22 +73,30 @@ class TestExecuteToolCall:
     @pytest.mark.asyncio
     async def test_routes_to_mcp_execute_tool(self, mocker):
         """FR-5: execute_tool_call delegates to mcp_tools.execute_tool per spec."""
-        mock = mocker.patch("agent.execute_tool", new_callable=AsyncMock, return_value="result")
-        result = await agent.execute_tool_call("search_flights", {"destination": "Singapore"})
+        mock = mocker.patch(
+            "agent.execute_tool", new_callable=AsyncMock, return_value="result"
+        )
+        result = await agent.execute_tool_call(
+            "search_flights", {"destination": "Singapore"}
+        )
         mock.assert_called_once_with("search_flights", {"destination": "Singapore"})
         assert result == "result"
 
     @pytest.mark.asyncio
     async def test_returns_error_string_on_exception(self, mocker):
         """FR-5: exceptions are caught and returned as error string per spec."""
-        mocker.patch("agent.execute_tool", new_callable=AsyncMock, side_effect=Exception("boom"))
+        mocker.patch(
+            "agent.execute_tool", new_callable=AsyncMock, side_effect=Exception("boom")
+        )
         result = await agent.execute_tool_call("search_flights", {})
         assert "failed with error" in result
 
     @pytest.mark.asyncio
     async def test_error_string_includes_tool_name(self, mocker):
         """FR-5: error message must include the tool name per spec."""
-        mocker.patch("agent.execute_tool", new_callable=AsyncMock, side_effect=Exception("boom"))
+        mocker.patch(
+            "agent.execute_tool", new_callable=AsyncMock, side_effect=Exception("boom")
+        )
         result = await agent.execute_tool_call("search_hotels", {})
         assert "search_hotels" in result
 
@@ -121,18 +131,29 @@ class TestRunAgent:
         self, mocker, mock_tool_use_response, mock_end_turn_response
     ):
         """FR-5: tool_use stop_reason triggers tool execution and second API call per spec."""
-        client = self._setup_client(mocker, mock_tool_use_response, mock_end_turn_response)
+        client = self._setup_client(
+            mocker, mock_tool_use_response, mock_end_turn_response
+        )
         result = await agent.run_agent(1, "Find flights", [])
         assert client.messages.create.call_count == 2
         assert result == "Here is your tour package!"
 
     @pytest.mark.asyncio
-    async def test_executes_multiple_tools_in_one_turn(self, mocker, mock_end_turn_response):
+    async def test_executes_multiple_tools_in_one_turn(
+        self, mocker, mock_end_turn_response
+    ):
         """FR-5: multiple tool_use blocks in one response are all executed per spec."""
         multi_tool_response = MagicMock()
         multi_tool_response.stop_reason = "tool_use"
-        block1 = MagicMock(type="tool_use", id="t1", name="search_flights", input={"destination": "Singapore"})
-        block2 = MagicMock(type="tool_use", id="t2", name="search_hotels", input={"city": "Singapore"})
+        block1 = MagicMock(
+            type="tool_use",
+            id="t1",
+            name="search_flights",
+            input={"destination": "Singapore"},
+        )
+        block2 = MagicMock(
+            type="tool_use", id="t2", name="search_hotels", input={"city": "Singapore"}
+        )
         multi_tool_response.content = [block1, block2]
 
         self._setup_client(mocker, multi_tool_response, mock_end_turn_response)
@@ -158,21 +179,27 @@ class TestRunAgent:
         client = self._setup_client(mocker, *([mock_tool_use_response] * 11))
         result = await agent.run_agent(1, "Hello", [])
         assert client.messages.create.call_count == 10
-        assert result == "I was unable to complete your request in time. Please try again."
+        assert (
+            result == "I was unable to complete your request in time. Please try again."
+        )
 
     @pytest.mark.asyncio
     async def test_timeout_message_is_correct(self, mocker, mock_tool_use_response):
         """FR-5: iteration cap message matches spec exactly."""
         self._setup_client(mocker, *([mock_tool_use_response] * 11))
         result = await agent.run_agent(1, "Hello", [])
-        assert result == "I was unable to complete your request in time. Please try again."
+        assert (
+            result == "I was unable to complete your request in time. Please try again."
+        )
 
     @pytest.mark.asyncio
     async def test_appends_assistant_message_after_tool_use(
         self, mocker, mock_tool_use_response, mock_end_turn_response
     ):
         """FR-5: assistant content blocks are appended to messages after tool_use per spec."""
-        client = self._setup_client(mocker, mock_tool_use_response, mock_end_turn_response)
+        client = self._setup_client(
+            mocker, mock_tool_use_response, mock_end_turn_response
+        )
         await agent.run_agent(1, "Find flights", [])
         second_call_messages = client.messages.create.call_args_list[1][1]["messages"]
         # The assistant message with tool_use content should be in the messages
@@ -184,15 +211,21 @@ class TestRunAgent:
         self, mocker, mock_tool_use_response, mock_end_turn_response
     ):
         """FR-5: tool_result user message is appended after tool execution per spec."""
-        client = self._setup_client(mocker, mock_tool_use_response, mock_end_turn_response)
+        client = self._setup_client(
+            mocker, mock_tool_use_response, mock_end_turn_response
+        )
         await agent.run_agent(1, "Find flights", [])
         second_call_messages = client.messages.create.call_args_list[1][1]["messages"]
         # Find the user message that contains tool_result
         tool_result_msgs = [
-            m for m in second_call_messages
+            m
+            for m in second_call_messages
             if m["role"] == "user"
             and isinstance(m["content"], list)
-            and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in m["content"])
+            and any(
+                isinstance(b, dict) and b.get("type") == "tool_result"
+                for b in m["content"]
+            )
         ]
         assert len(tool_result_msgs) == 1
 
@@ -218,16 +251,19 @@ class TestRunAgent:
         assert result == "I have no response. Please try again."
 
     @pytest.mark.asyncio
-    async def test_user_id_does_not_affect_output(
-        self, mocker, mock_end_turn_response
-    ):
+    async def test_user_id_does_not_affect_output(self, mocker, mock_end_turn_response):
         """FR-5: user_id is used for logging only and does not change return value per spec."""
         self._setup_client(mocker, mock_end_turn_response)
         result_a = await agent.run_agent(111, "Hello", [])
 
-        mocker.patch("agent._get_client", return_value=MagicMock(
-            messages=MagicMock(create=AsyncMock(return_value=mock_end_turn_response))
-        ))
+        mocker.patch(
+            "agent._get_client",
+            return_value=MagicMock(
+                messages=MagicMock(
+                    create=AsyncMock(return_value=mock_end_turn_response)
+                )
+            ),
+        )
         result_b = await agent.run_agent(999, "Hello", [])
         assert result_a == result_b
 
@@ -268,8 +304,12 @@ class TestRunAgentContentSerialisation:
 
         # Second call's messages list must have an assistant entry whose
         # content is a list of plain dicts
-        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
-        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
+        second_call_messages = mock_client.messages.create.call_args_list[1][1][
+            "messages"
+        ]
+        assistant_entry = next(
+            m for m in second_call_messages if m["role"] == "assistant"
+        )
         content = assistant_entry["content"]
         assert isinstance(content, list)
         for block in content:
@@ -286,9 +326,15 @@ class TestRunAgentContentSerialisation:
 
         await agent.run_agent(1, "test", [])
 
-        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
-        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
-        tool_dicts = [b for b in assistant_entry["content"] if b.get("type") == "tool_use"]
+        second_call_messages = mock_client.messages.create.call_args_list[1][1][
+            "messages"
+        ]
+        assistant_entry = next(
+            m for m in second_call_messages if m["role"] == "assistant"
+        )
+        tool_dicts = [
+            b for b in assistant_entry["content"] if b.get("type") == "tool_use"
+        ]
         assert len(tool_dicts) == 1
         td = tool_dicts[0]
         assert "type" in td
@@ -323,8 +369,12 @@ class TestRunAgentContentSerialisation:
 
         await agent.run_agent(1, "test", [])
 
-        second_call_messages = mock_client.messages.create.call_args_list[1][1]["messages"]
-        assistant_entry = next(m for m in second_call_messages if m["role"] == "assistant")
+        second_call_messages = mock_client.messages.create.call_args_list[1][1][
+            "messages"
+        ]
+        assistant_entry = next(
+            m for m in second_call_messages if m["role"] == "assistant"
+        )
         text_dicts = [b for b in assistant_entry["content"] if b.get("type") == "text"]
         assert len(text_dicts) == 1
         assert "type" in text_dicts[0]
