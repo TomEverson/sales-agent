@@ -6,6 +6,7 @@ import httpx
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mcp_tools import (
@@ -16,6 +17,10 @@ from mcp_tools import (
     execute_search_activities,
     execute_search_transport,
     execute_tool,
+    execute_book_flight,
+    execute_book_hotel,
+    execute_book_activity,
+    execute_book_transport,
 )
 
 
@@ -31,6 +36,7 @@ class TestSearchFlightsToolDefinition:
     def test_no_import_errors(self):
         """FR-1: mcp_tools imports without errors."""
         import mcp_tools as _m  # noqa: F401
+
         assert _m is not None
 
     def test_search_flights_tool_valid_anthropic_format(self):
@@ -110,6 +116,7 @@ class TestExecuteSearchFlights:
         )
         result = await execute_search_flights({"destination": "Singapore"})
         import json
+
         flights = json.loads(result)
         for f in flights:
             assert f["seats_available"] > 0
@@ -126,7 +133,9 @@ class TestExecuteSearchFlights:
 
     @pytest.mark.asyncio
     @respx.mock
-    async def test_search_flights_all_zero_seats_gives_no_results_message(self, mock_flight_response):
+    async def test_search_flights_all_zero_seats_gives_no_results_message(
+        self, mock_flight_response
+    ):
         """FR-1: all results with seats_available==0 produce 'no results' message."""
         zero_seats = [dict(f, seats_available=0) for f in mock_flight_response]
         respx.get("http://localhost:8000/flights").mock(
@@ -148,16 +157,19 @@ class TestExecuteSearchFlights:
         route = respx.get("http://localhost:8000/flights").mock(
             return_value=httpx.Response(200, json=[mock_flight_response[0]])
         )
-        result = await execute_search_flights({
-            "origin": "Bangkok",
-            "destination": "Singapore",
-            "class_type": "economy",
-        })
+        result = await execute_search_flights(
+            {
+                "origin": "Bangkok",
+                "destination": "Singapore",
+                "class_type": "economy",
+            }
+        )
         request = route.calls[0].request
         assert "origin=Bangkok" in str(request.url)
         assert "destination=Singapore" in str(request.url)
         assert "class_type=economy" in str(request.url)
         import json
+
         assert len(json.loads(result)) == 1
 
 
@@ -176,6 +188,7 @@ class TestExecuteTool:
         )
         result = await execute_tool("search_flights", {"destination": "Singapore"})
         import json
+
         flights = json.loads(result)
         assert len(flights) == 1
 
@@ -202,6 +215,7 @@ class TestExecuteSearchHotels:
         )
         result = await execute_search_hotels({"city": "Singapore"})
         import json
+
         hotels = json.loads(result)
         assert len(hotels) == 1
         assert hotels[0]["name"] == "The Singapore Suites"
@@ -215,6 +229,7 @@ class TestExecuteSearchHotels:
         )
         result = await execute_search_hotels({"city": "Singapore"})
         import json
+
         hotels = json.loads(result)
         for h in hotels:
             assert h["rooms_available"] > 0
@@ -302,6 +317,7 @@ class TestExecuteSearchActivities:
         )
         result = await execute_search_activities({"city": "Singapore"})
         import json
+
         activities = json.loads(result)
         assert len(activities) == 3
 
@@ -362,13 +378,16 @@ class TestExecuteSearchActivities:
 
     @pytest.mark.asyncio
     @respx.mock
-    async def test_all_results_returned_regardless_of_availability(self, mock_activity_response):
+    async def test_all_results_returned_regardless_of_availability(
+        self, mock_activity_response
+    ):
         """FR-3: availability field must not be used to filter results per spec."""
         respx.get("http://localhost:8000/activities").mock(
             return_value=httpx.Response(200, json=mock_activity_response)
         )
         result = await execute_search_activities({"city": "Singapore"})
         import json
+
         activities = json.loads(result)
         # All 3 returned including the "weekends" one
         assert len(activities) == 3
@@ -411,11 +430,14 @@ class TestExecuteSearchTransport:
         respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=mock_transport_response)
         )
-        result = await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-        })
+        result = await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+            }
+        )
         import json
+
         transport = json.loads(result)
         assert len(transport) == 3
         assert transport[0]["type"] == "car"
@@ -445,11 +467,13 @@ class TestExecuteSearchTransport:
         route = respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=mock_transport_response)
         )
-        await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-            "type": "car",
-        })
+        await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+                "type": "car",
+            }
+        )
         request = route.calls[0].request
         assert "type=car" in str(request.url)
 
@@ -460,13 +484,17 @@ class TestExecuteSearchTransport:
         route = respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=[])
         )
-        await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-        })
+        await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+            }
+        )
         request = route.calls[0].request
         assert "type" not in str(request.url)
-        assert "origin=Singapore+Airport" in str(request.url) or "origin=Singapore%20Airport" in str(request.url)
+        assert "origin=Singapore+Airport" in str(
+            request.url
+        ) or "origin=Singapore%20Airport" in str(request.url)
 
     @pytest.mark.asyncio
     @respx.mock
@@ -475,10 +503,12 @@ class TestExecuteSearchTransport:
         respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=[])
         )
-        result = await execute_search_transport({
-            "origin": "Tokyo",
-            "destination": "Osaka",
-        })
+        result = await execute_search_transport(
+            {
+                "origin": "Tokyo",
+                "destination": "Osaka",
+            }
+        )
         assert result == "No transport found from Tokyo to Osaka."
 
     @pytest.mark.asyncio
@@ -488,20 +518,24 @@ class TestExecuteSearchTransport:
         respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=[])
         )
-        result = await execute_search_transport({
-            "origin": "Kuala Lumpur",
-            "destination": "Penang",
-        })
+        result = await execute_search_transport(
+            {
+                "origin": "Kuala Lumpur",
+                "destination": "Penang",
+            }
+        )
         assert "Kuala Lumpur" in result
         assert "Penang" in result
 
     @pytest.mark.asyncio
     async def test_server_unreachable_returns_message(self):
         """FR-4: connection error returns unavailable message per spec."""
-        result = await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-        })
+        result = await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+            }
+        )
         assert result == "Transport search is currently unavailable. Please try again."
 
     @pytest.mark.asyncio
@@ -511,11 +545,14 @@ class TestExecuteSearchTransport:
         respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=mock_transport_response)
         )
-        result = await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-        })
+        result = await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+            }
+        )
         import json
+
         transport = json.loads(result)
         # All 3 records returned regardless of capacity (4, 40, 60)
         assert len(transport) == 3
@@ -527,11 +564,13 @@ class TestExecuteSearchTransport:
         route = respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=[mock_transport_response[2]])
         )
-        await execute_search_transport({
-            "origin": "Singapore",
-            "destination": "Batam",
-            "type": "ferry",
-        })
+        await execute_search_transport(
+            {
+                "origin": "Singapore",
+                "destination": "Batam",
+                "type": "ferry",
+            }
+        )
         request = route.calls[0].request
         assert "type=ferry" in str(request.url)
 
@@ -542,11 +581,13 @@ class TestExecuteSearchTransport:
         route = respx.get("http://localhost:8000/transport").mock(
             return_value=httpx.Response(200, json=[mock_transport_response[0]])
         )
-        await execute_search_transport({
-            "origin": "Singapore Airport",
-            "destination": "Singapore City",
-            "type": "car",
-        })
+        await execute_search_transport(
+            {
+                "origin": "Singapore Airport",
+                "destination": "Singapore City",
+                "type": "car",
+            }
+        )
         request = route.calls[0].request
         assert "type=car" in str(request.url)
 
@@ -564,11 +605,21 @@ class TestToolsRegistry:
     def test_tools_list_order(self):
         """FR-4: TOOLS list order must be flights, hotels, activities, transport per spec."""
         names = [t["name"] for t in TOOLS]
-        assert names == ["search_flights", "search_hotels", "search_activities", "search_transport"]
+        assert names == [
+            "search_flights",
+            "search_hotels",
+            "search_activities",
+            "search_transport",
+        ]
 
     def test_all_tool_names_are_correct(self):
         """FR-4: each tool in TOOLS must have the exact name defined in its spec."""
-        expected = {"search_flights", "search_hotels", "search_activities", "search_transport"}
+        expected = {
+            "search_flights",
+            "search_hotels",
+            "search_activities",
+            "search_transport",
+        }
         actual = {t["name"] for t in TOOLS}
         assert actual == expected
 
@@ -591,9 +642,10 @@ class TestToolsRegistry:
         r1 = await execute_tool("search_flights", {"destination": "Singapore"})
         r2 = await execute_tool("search_hotels", {"city": "Singapore"})
         r3 = await execute_tool("search_activities", {"city": "Singapore"})
-        r4 = await execute_tool("search_transport", {
-            "origin": "Singapore Airport", "destination": "Singapore City"
-        })
+        r4 = await execute_tool(
+            "search_transport",
+            {"origin": "Singapore Airport", "destination": "Singapore City"},
+        )
         for result in (r1, r2, r3, r4):
             assert "Unknown tool" not in result
 
@@ -602,3 +654,501 @@ class TestToolsRegistry:
         """FR-4: execute_tool returns unknown tool message for unrecognised tool name."""
         result = await execute_tool("search_packages", {})
         assert result == "Unknown tool: search_packages"
+
+
+# ---------------------------------------------------------------------------
+# TestBookFlight — TB-23
+# ---------------------------------------------------------------------------
+
+
+class TestBookFlight:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_confirmation_on_success(
+        self, respx_mock, mock_booking_response
+    ):
+        """TB-23: successful booking returns formatted confirmation string."""
+        respx_mock.post("http://localhost:8000/bookings/flights").mock(
+            return_value=httpx.Response(201, json=mock_booking_response)
+        )
+        result = await execute_book_flight(
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Booking confirmed" in result
+        assert mock_booking_response["booking_reference"] in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_confirmation_contains_booking_reference(
+        self, respx_mock, mock_booking_response
+    ):
+        """TB-23: confirmation string includes the booking reference from response."""
+        respx_mock.post("http://localhost:8000/bookings/flights").mock(
+            return_value=httpx.Response(201, json=mock_booking_response)
+        )
+        result = await execute_book_flight(
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "TB-20260328-A3F7" in result
+
+    @pytest.mark.asyncio
+    async def test_flight_id_is_required(self):
+        """TB-23: missing flight_id returns clear error message."""
+        result = await execute_book_flight(
+            {
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "flight_id is required" in result
+
+    @pytest.mark.asyncio
+    async def test_passenger_name_is_required(self):
+        """TB-23: missing passenger_name returns clear error message."""
+        result = await execute_book_flight(
+            {
+                "flight_id": 1,
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Passenger name is required" in result
+
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
+    async def test_contact_email_is_required(self):
+        """TB-23: missing contact_email returns clear error message."""
+        result = await execute_book_flight(
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+            }
+        )
+        assert "Contact email is required" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_seat_error_on_422(self, respx_mock):
+        """TB-23: 422 response returns no-seats-available message."""
+        respx_mock.post("http://localhost:8000/bookings/flights").mock(
+            return_value=httpx.Response(422, json={"detail": "Not enough seats"})
+        )
+        result = await execute_book_flight(
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "not enough seats" in result.lower() or "no longer has" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_seats_booked_defaults_to_one(
+        self, respx_mock, mock_booking_response
+    ):
+        """TB-23: seats_booked of 1 is sent when not in input dict."""
+        route = respx_mock.post("http://localhost:8000/bookings/flights").mock(
+            return_value=httpx.Response(201, json=mock_booking_response)
+        )
+        await execute_book_flight(
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        call = route.calls[0]
+        import json
+
+        body = json.loads(call.request.content)
+        assert body.get("seats_booked", 1) == 1
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_book_flight(
+        self, respx_mock, mock_booking_response
+    ):
+        """TB-23: execute_tool routes book_flight to execute_book_flight."""
+        respx_mock.post("http://localhost:8000/bookings/flights").mock(
+            return_value=httpx.Response(201, json=mock_booking_response)
+        )
+        result = await execute_tool(
+            "book_flight",
+            {
+                "flight_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            },
+        )
+        assert "Booking confirmed" in result
+
+    def test_tools_list_contains_eight_tools(self):
+        """TB-23: TOOLS list contains exactly 8 tools after TB-17."""
+        assert len(TOOLS) == 8
+
+
+# ---------------------------------------------------------------------------
+# TestBookHotel — TB-23
+# ---------------------------------------------------------------------------
+
+
+class TestBookHotel:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_confirmation_on_success(
+        self, respx_mock, mock_hotel_booking_response
+    ):
+        """TB-23: successful hotel booking returns confirmation."""
+        respx_mock.post("http://localhost:8000/bookings/hotels").mock(
+            return_value=httpx.Response(201, json=mock_hotel_booking_response)
+        )
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "Hotel booking confirmed" in result
+
+    @pytest.mark.asyncio
+    async def test_hotel_id_is_required(self):
+        """TB-23: missing hotel_id returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "hotel_id is required" in result
+
+    @pytest.mark.asyncio
+    async def test_guest_name_is_required(self):
+        """TB-23: missing guest_name returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "Guest name is required" in result
+
+    @pytest.mark.asyncio
+    async def test_contact_email_is_required(self):
+        """TB-23: missing contact_email returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "Contact email is required" in result
+
+    @pytest.mark.asyncio
+    async def test_check_in_date_is_required(self):
+        """TB-23: missing check_in_date returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "Check-in date is required" in result
+
+    @pytest.mark.asyncio
+    async def test_check_out_date_is_required(self):
+        """TB-23: missing check_out_date returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "nights": 2,
+            }
+        )
+        assert "Check-out date is required" in result
+
+    @pytest.mark.asyncio
+    async def test_nights_is_required(self):
+        """TB-23: missing nights returns clear error message."""
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+            }
+        )
+        assert "Number of nights is required" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_room_error_on_422(self, respx_mock):
+        """TB-23: 422 response returns no-rooms message."""
+        respx_mock.post("http://localhost:8000/bookings/hotels").mock(
+            return_value=httpx.Response(422, json={"detail": "Not enough rooms"})
+        )
+        result = await execute_book_hotel(
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            }
+        )
+        assert "no longer has" in result.lower() or "not enough rooms" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_book_hotel(
+        self, respx_mock, mock_hotel_booking_response
+    ):
+        """TB-23: execute_tool routes book_hotel to execute_book_hotel."""
+        respx_mock.post("http://localhost:8000/bookings/hotels").mock(
+            return_value=httpx.Response(201, json=mock_hotel_booking_response)
+        )
+        result = await execute_tool(
+            "book_hotel",
+            {
+                "hotel_id": 1,
+                "guest_name": "John Smith",
+                "contact_email": "john@example.com",
+                "check_in_date": "2026-03-28",
+                "check_out_date": "2026-03-30",
+                "nights": 2,
+            },
+        )
+        assert "Hotel booking confirmed" in result
+
+
+# ---------------------------------------------------------------------------
+# TestBookActivity — TB-23
+# ---------------------------------------------------------------------------
+
+
+class TestBookActivity:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_confirmation_on_success(
+        self, respx_mock, mock_activity_booking_response
+    ):
+        """TB-23: successful activity booking returns confirmation."""
+        respx_mock.post("http://localhost:8000/bookings/activities").mock(
+            return_value=httpx.Response(201, json=mock_activity_booking_response)
+        )
+        result = await execute_book_activity(
+            {
+                "activity_id": 1,
+                "participant_name": "John Smith",
+                "contact_email": "john@example.com",
+                "activity_date": "2026-03-29",
+            }
+        )
+        assert "Activity booking confirmed" in result
+
+    @pytest.mark.asyncio
+    async def test_activity_id_is_required(self):
+        """TB-23: missing activity_id returns clear error message."""
+        result = await execute_book_activity(
+            {
+                "participant_name": "John Smith",
+                "contact_email": "john@example.com",
+                "activity_date": "2026-03-29",
+            }
+        )
+        assert "activity_id is required" in result
+
+    @pytest.mark.asyncio
+    async def test_participant_name_is_required(self):
+        """TB-23: missing participant_name returns clear error message."""
+        result = await execute_book_activity(
+            {
+                "activity_id": 1,
+                "contact_email": "john@example.com",
+                "activity_date": "2026-03-29",
+            }
+        )
+        assert "Participant name is required" in result
+
+    @pytest.mark.asyncio
+    async def test_contact_email_is_required(self):
+        """TB-23: missing contact_email returns clear error message."""
+        result = await execute_book_activity(
+            {
+                "activity_id": 1,
+                "participant_name": "John Smith",
+                "activity_date": "2026-03-29",
+            }
+        )
+        assert "Contact email is required" in result
+
+    @pytest.mark.asyncio
+    async def test_activity_date_is_required(self):
+        """TB-23: missing activity_date returns clear error message."""
+        result = await execute_book_activity(
+            {
+                "activity_id": 1,
+                "participant_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Activity date is required" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_not_found_on_404(self, respx_mock):
+        """TB-23: 404 response returns activity-not-found message."""
+        respx_mock.post("http://localhost:8000/bookings/activities").mock(
+            return_value=httpx.Response(404, json={"detail": "Not found"})
+        )
+        result = await execute_book_activity(
+            {
+                "activity_id": 99999,
+                "participant_name": "John Smith",
+                "contact_email": "john@example.com",
+                "activity_date": "2026-03-29",
+            }
+        )
+        assert "not found" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_book_activity(
+        self, respx_mock, mock_activity_booking_response
+    ):
+        """TB-23: execute_tool routes book_activity to execute_book_activity."""
+        respx_mock.post("http://localhost:8000/bookings/activities").mock(
+            return_value=httpx.Response(201, json=mock_activity_booking_response)
+        )
+        result = await execute_tool(
+            "book_activity",
+            {
+                "activity_id": 1,
+                "participant_name": "John Smith",
+                "contact_email": "john@example.com",
+                "activity_date": "2026-03-29",
+            },
+        )
+        assert "Activity booking confirmed" in result
+
+
+# ---------------------------------------------------------------------------
+# TestBookTransport — TB-23
+# ---------------------------------------------------------------------------
+
+
+class TestBookTransport:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_confirmation_on_success(
+        self, respx_mock, mock_transport_booking_response
+    ):
+        """TB-23: successful transport booking returns confirmation."""
+        respx_mock.post("http://localhost:8000/bookings/transport").mock(
+            return_value=httpx.Response(201, json=mock_transport_booking_response)
+        )
+        result = await execute_book_transport(
+            {
+                "transport_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Transport booking confirmed" in result
+
+    @pytest.mark.asyncio
+    async def test_transport_id_is_required(self):
+        """TB-23: missing transport_id returns clear error message."""
+        result = await execute_book_transport(
+            {
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "transport_id is required" in result
+
+    @pytest.mark.asyncio
+    async def test_passenger_name_is_required(self):
+        """TB-23: missing passenger_name returns clear error message."""
+        result = await execute_book_transport(
+            {
+                "transport_id": 1,
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Passenger name is required" in result
+
+    @pytest.mark.asyncio
+    async def test_contact_email_is_required(self):
+        """TB-23: missing contact_email returns clear error message."""
+        result = await execute_book_transport(
+            {
+                "transport_id": 1,
+                "passenger_name": "John Smith",
+            }
+        )
+        assert "Contact email is required" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_capacity_error_on_422(self, respx_mock):
+        """TB-23: 422 response returns no-capacity message."""
+        respx_mock.post("http://localhost:8000/bookings/transport").mock(
+            return_value=httpx.Response(422, json={"detail": "Not enough capacity"})
+        )
+        result = await execute_book_transport(
+            {
+                "transport_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert (
+            "no longer has" in result.lower() or "not enough capacity" in result.lower()
+        )
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_book_transport(
+        self, respx_mock, mock_transport_booking_response
+    ):
+        """TB-23: execute_tool routes book_transport to execute_book_transport."""
+        respx_mock.post("http://localhost:8000/bookings/transport").mock(
+            return_value=httpx.Response(201, json=mock_transport_booking_response)
+        )
+        result = await execute_tool(
+            "book_transport",
+            {
+                "transport_id": 1,
+                "passenger_name": "John Smith",
+                "contact_email": "john@example.com",
+            },
+        )
+        assert "Transport booking confirmed" in result

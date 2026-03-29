@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -10,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def clear_memory_store():
     """FR-6: reset the memory store before each test to ensure isolation."""
     from memory import _store
+
     _store.clear()
     yield
     _store.clear()
@@ -30,10 +32,7 @@ def user_id_b():
 @pytest.fixture
 def sample_messages():
     """FR-6: list of sample messages for populating history in tests."""
-    return [
-        {"role": "user", "content": f"Message {i}"}
-        for i in range(25)
-    ]
+    return [{"role": "user", "content": f"Message {i}"} for i in range(25)]
 
 
 @pytest.fixture
@@ -41,9 +40,7 @@ def mock_end_turn_response():
     """FR-5: simulates Claude API response with stop_reason end_turn."""
     response = MagicMock()
     response.stop_reason = "end_turn"
-    response.content = [
-        MagicMock(type="text", text="Here is your tour package!")
-    ]
+    response.content = [MagicMock(type="text", text="Here is your tour package!")]
     return response
 
 
@@ -74,6 +71,7 @@ def sample_history():
 def system_prompt_content():
     """FR-8: loads the full system prompt from file for content tests."""
     from pathlib import Path
+
     prompt_path = Path(__file__).parent.parent / "prompts" / "system_prompt.md"
     if prompt_path.exists():
         return prompt_path.read_text()
@@ -154,6 +152,7 @@ def mock_activity_response():
 def mock_update():
     """FR-9: mock Telegram Update object for handler tests."""
     from unittest.mock import AsyncMock
+
     update = MagicMock()
     update.effective_user.id = 12345
     update.effective_chat.id = 12345
@@ -167,6 +166,7 @@ def mock_update():
 def mock_context():
     """FR-9: mock Telegram CallbackContext for handler tests."""
     from unittest.mock import AsyncMock
+
     context = MagicMock()
     context.bot.send_chat_action = AsyncMock()
     context.bot.send_message = AsyncMock()
@@ -187,68 +187,80 @@ def mock_fastapi(respx_mock):
     import httpx
 
     respx_mock.get("http://localhost:8000/flights").mock(
-        return_value=httpx.Response(200, json=[
-            {
-                "id": 1,
-                "origin": "Bangkok",
-                "destination": "Singapore",
-                "airline": "AirAsia",
-                "departure_time": "2026-03-28T08:00:00",
-                "arrival_time": "2026-03-28T09:30:00",
-                "price": 85.0,
-                "seats_available": 50,
-                "class_type": "economy",
-            }
-        ])
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "id": 1,
+                    "origin": "Bangkok",
+                    "destination": "Singapore",
+                    "airline": "AirAsia",
+                    "departure_time": "2026-03-28T08:00:00",
+                    "arrival_time": "2026-03-28T09:30:00",
+                    "price": 85.0,
+                    "seats_available": 50,
+                    "class_type": "economy",
+                }
+            ],
+        )
     )
     respx_mock.get("http://localhost:8000/hotels").mock(
-        return_value=httpx.Response(200, json=[
-            {
-                "id": 1,
-                "name": "The Singapore Suites",
-                "city": "Singapore",
-                "stars": 4,
-                "price_per_night": 120.0,
-                "amenities": "pool,wifi,gym",
-                "rooms_available": 5,
-            }
-        ])
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "id": 1,
+                    "name": "The Singapore Suites",
+                    "city": "Singapore",
+                    "stars": 4,
+                    "price_per_night": 120.0,
+                    "amenities": "pool,wifi,gym",
+                    "rooms_available": 5,
+                }
+            ],
+        )
     )
     respx_mock.get("http://localhost:8000/activities").mock(
-        return_value=httpx.Response(200, json=[
-            {
-                "id": 1,
-                "name": "Gardens by the Bay Tour",
-                "city": "Singapore",
-                "category": "nature",
-                "duration_hours": 3.0,
-                "price": 25.0,
-                "availability": "daily",
-            },
-            {
-                "id": 2,
-                "name": "Singapore Food Walk",
-                "city": "Singapore",
-                "category": "food",
-                "duration_hours": 2.0,
-                "price": 35.0,
-                "availability": "daily",
-            },
-        ])
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "id": 1,
+                    "name": "Gardens by the Bay Tour",
+                    "city": "Singapore",
+                    "category": "nature",
+                    "duration_hours": 3.0,
+                    "price": 25.0,
+                    "availability": "daily",
+                },
+                {
+                    "id": 2,
+                    "name": "Singapore Food Walk",
+                    "city": "Singapore",
+                    "category": "food",
+                    "duration_hours": 2.0,
+                    "price": 35.0,
+                    "availability": "daily",
+                },
+            ],
+        )
     )
     respx_mock.get("http://localhost:8000/transport").mock(
-        return_value=httpx.Response(200, json=[
-            {
-                "id": 1,
-                "type": "car",
-                "origin": "Singapore Airport",
-                "destination": "Singapore City",
-                "departure_time": "2026-03-28T10:00:00",
-                "arrival_time": "2026-03-28T10:45:00",
-                "price": 30.0,
-                "capacity": 4,
-            }
-        ])
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "id": 1,
+                    "type": "car",
+                    "origin": "Singapore Airport",
+                    "destination": "Singapore City",
+                    "departure_time": "2026-03-28T10:00:00",
+                    "arrival_time": "2026-03-28T10:45:00",
+                    "price": 30.0,
+                    "capacity": 4,
+                }
+            ],
+        )
     )
     return respx_mock
 
@@ -297,14 +309,17 @@ def mock_claude(mocker):
     final_response = MagicMock()
     final_response.stop_reason = "end_turn"
     final_response.content = [
-        MagicMock(type="text", text=(
-            "Here is your Singapore package!\n\n"
-            "✈️ Flight: Bangkok → Singapore | AirAsia | $85.00\n"
-            "🏨 Hotel: The Singapore Suites ⭐⭐⭐⭐ | $120.00/night\n"
-            "🎯 Activities: Gardens by the Bay Tour | $25.00\n"
-            "💰 Total: $350.00 (Budget remaining: $650.00)\n\n"
-            "Would you like to adjust anything?"
-        ))
+        MagicMock(
+            type="text",
+            text=(
+                "Here is your Singapore package!\n\n"
+                "✈️ Flight: Bangkok → Singapore | AirAsia | $85.00\n"
+                "🏨 Hotel: The Singapore Suites ⭐⭐⭐⭐ | $120.00/night\n"
+                "🎯 Activities: Gardens by the Bay Tour | $25.00\n"
+                "💰 Total: $350.00 (Budget remaining: $650.00)\n\n"
+                "Would you like to adjust anything?"
+            ),
+        )
     ]
 
     mock_client = MagicMock()
@@ -354,6 +369,7 @@ def mock_transport_response():
 def sample_flight():
     """FR-7: sample PackageFlight for formatting tests."""
     from package_builder import PackageFlight
+
     return PackageFlight(
         origin="Bangkok",
         destination="Singapore",
@@ -369,6 +385,7 @@ def sample_flight():
 def sample_hotel():
     """FR-7: sample PackageHotel for formatting tests."""
     from package_builder import PackageHotel
+
     return PackageHotel(
         name="The Singapore Suites",
         stars=4,
@@ -381,6 +398,7 @@ def sample_hotel():
 def sample_activities():
     """FR-7: sample list of PackageActivity for formatting tests."""
     from package_builder import PackageActivity
+
     return [
         PackageActivity(name="Gardens by the Bay Tour", price=25.0, duration_hours=3.0),
         PackageActivity(name="Singapore Food Walk", price=35.0, duration_hours=2.0),
@@ -391,6 +409,7 @@ def sample_activities():
 def sample_transport():
     """FR-7: sample PackageTransport for formatting tests."""
     from package_builder import PackageTransport
+
     return PackageTransport(
         origin="Singapore Airport",
         destination="Singapore City",
@@ -405,6 +424,7 @@ def sample_package_with_transport(
 ):
     """FR-7: complete TourPackage with transport for formatting tests."""
     from package_builder import TourPackage
+
     return TourPackage(
         flight=sample_flight,
         hotel=sample_hotel,
@@ -418,6 +438,7 @@ def sample_package_with_transport(
 def sample_package_no_transport(sample_flight, sample_hotel, sample_activities):
     """FR-7: complete TourPackage without transport for formatting tests."""
     from package_builder import TourPackage
+
     return TourPackage(
         flight=sample_flight,
         hotel=sample_hotel,
@@ -454,3 +475,67 @@ def mock_flight_response():
             "class_type": "economy",
         },
     ]
+
+
+@pytest.fixture
+def mock_booking_response():
+    """TB-23: sample FlightBooking response from server."""
+    return {
+        "id": 1,
+        "flight_id": 1,
+        "passenger_name": "John Smith",
+        "contact_email": "john@example.com",
+        "booking_reference": "TB-20260328-A3F7",
+        "status": "confirmed",
+        "seats_booked": 1,
+        "created_at": "2026-03-28T10:00:00",
+    }
+
+
+@pytest.fixture
+def mock_hotel_booking_response():
+    """TB-23: sample HotelBooking response from server."""
+    return {
+        "id": 1,
+        "hotel_id": 1,
+        "guest_name": "John Smith",
+        "contact_email": "john@example.com",
+        "check_in_date": "2026-03-28",
+        "check_out_date": "2026-03-30",
+        "nights": 2,
+        "guests": 1,
+        "booking_reference": "TB-20260328-B2K9",
+        "status": "confirmed",
+        "created_at": "2026-03-28T10:00:00",
+    }
+
+
+@pytest.fixture
+def mock_activity_booking_response():
+    """TB-23: sample ActivityBooking response from server."""
+    return {
+        "id": 1,
+        "activity_id": 1,
+        "participant_name": "John Smith",
+        "contact_email": "john@example.com",
+        "activity_date": "2026-03-29",
+        "participants": 1,
+        "booking_reference": "TB-20260328-C5T1",
+        "status": "confirmed",
+        "created_at": "2026-03-28T10:00:00",
+    }
+
+
+@pytest.fixture
+def mock_transport_booking_response():
+    """TB-23: sample TransportBooking response from server."""
+    return {
+        "id": 1,
+        "transport_id": 1,
+        "passenger_name": "John Smith",
+        "contact_email": "john@example.com",
+        "passengers": 1,
+        "booking_reference": "TB-20260328-D7R3",
+        "status": "confirmed",
+        "created_at": "2026-03-28T10:00:00",
+    }
