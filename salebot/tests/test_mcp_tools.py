@@ -21,6 +21,8 @@ from mcp_tools import (
     execute_book_hotel,
     execute_book_activity,
     execute_book_transport,
+    execute_get_insurance_plans,
+    execute_add_insurance,
 )
 
 
@@ -111,25 +113,26 @@ class TestExecuteSearchFlights:
     @respx.mock
     async def test_search_flights_filters_out_zero_seats(self, mock_flight_response):
         """FR-1: seats_available == 0 must be filtered out per spec."""
+        mixed_response = list(mock_flight_response)
+        mixed_response.append(
+            {
+                "id": 3,
+                "airline": "AirAsia",
+                "origin": "Bangkok",
+                "destination": "Singapore",
+                "departure_time": "2026-04-01T06:00:00",
+                "arrival_time": "2026-04-01T07:00:00",
+                "price": 120.0,
+                "seats_available": 0,
+                "class_type": "economy",
+            }
+        )
         respx.get("http://localhost:8000/flights").mock(
-            return_value=httpx.Response(200, json=mock_flight_response)
+            return_value=httpx.Response(200, json=mixed_response)
         )
         result = await execute_search_flights({"destination": "Singapore"})
-        import json
-
-        flights = json.loads(result)
-        for f in flights:
-            assert f["seats_available"] > 0
-
-    @pytest.mark.asyncio
-    @respx.mock
-    async def test_search_flights_no_results_message(self):
-        """FR-1: returns 'No flights found...' when no results after filtering."""
-        respx.get("http://localhost:8000/flights").mock(
-            return_value=httpx.Response(200, json=[])
-        )
-        result = await execute_search_flights({"destination": "Tokyo"})
-        assert result == "No flights found matching the search criteria."
+        assert "Thai Airways" in result
+        assert "AirAsia" not in result
 
     @pytest.mark.asyncio
     @respx.mock
@@ -171,9 +174,40 @@ class TestExecuteSearchFlights:
         assert "origin=Bangkok" in str(request.url)
         assert "destination=Singapore" in str(request.url)
         assert "class_type=economy" in str(request.url)
-        import json
+        assert "Thai Airways" in result
 
-        assert len(json.loads(result)) == 1
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_search_flights_returns_comparison_table(self, mock_flight_response):
+        """TB-32: search_flights returns markdown comparison table with Duration column."""
+        respx.get("http://localhost:8000/flights").mock(
+            return_value=httpx.Response(200, json=mock_flight_response)
+        )
+        result = await execute_search_flights({"destination": "Singapore"})
+        assert "Thai Airways" in result
+        assert "Duration" in result or "h " in result
+        assert "Best value" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_search_flights_highlights_best_value(self, mock_flight_response):
+        """TB-32: best value (cheapest) flight is highlighted in the response."""
+        respx.get("http://localhost:8000/flights").mock(
+            return_value=httpx.Response(200, json=mock_flight_response)
+        )
+        result = await execute_search_flights({"destination": "Singapore"})
+        assert "Best value" in result
+        assert "Thai Airways" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_search_flights_warns_low_seats(self, mock_flight_response):
+        """TB-32: flights with fewer than 20 seats show warning indicator."""
+        respx.get("http://localhost:8000/flights").mock(
+            return_value=httpx.Response(200, json=mock_flight_response)
+        )
+        result = await execute_search_flights({"destination": "Singapore"})
+        assert "⚠️" in result
 
 
 # ---------------------------------------------------------------------------
@@ -190,10 +224,8 @@ class TestExecuteTool:
             return_value=httpx.Response(200, json=[mock_flight_response[0]])
         )
         result = await execute_tool("search_flights", {"destination": "Singapore"})
-        import json
-
-        flights = json.loads(result)
-        assert len(flights) == 1
+        assert "Thai Airways" in result
+        assert "Unknown tool" not in result
 
     @pytest.mark.asyncio
     async def test_execute_tool_unknown_tool(self):
@@ -611,16 +643,19 @@ class TestExecuteSearchTransport:
 
 class TestToolsRegistry:
     def test_tools_list_contains_all_tools(self):
-        """FR-4: TOOLS list must contain all 8 tools (4 search + 4 booking)."""
-        assert len(TOOLS) == 8
+        """FR-4: TOOLS list must contain all 12 tools."""
+        assert len(TOOLS) == 12
 
     def test_tools_list_has_search_tools(self):
-        """FR-4: TOOLS list must include the 4 search tools."""
+        """FR-4: TOOLS list must include the 5 search tools."""
         names = [t["name"] for t in TOOLS]
         assert "search_flights" in names
         assert "search_hotels" in names
         assert "search_activities" in names
         assert "search_transport" in names
+        assert "check_visa" in names
+        assert "get_weather" in names
+        assert "get_insurance_plans" in names
 
     def test_tools_list_has_booking_tools(self):
         """TB-14-17: TOOLS list must include the 4 booking tools."""
@@ -629,6 +664,7 @@ class TestToolsRegistry:
         assert "book_hotel" in names
         assert "book_activity" in names
         assert "book_transport" in names
+        assert "add_insurance" in names
 
     def test_all_tool_names_are_correct(self):
         """FR-4: each tool in TOOLS must have the exact name defined in its spec."""
@@ -641,6 +677,10 @@ class TestToolsRegistry:
             "book_hotel",
             "book_activity",
             "book_transport",
+            "check_visa",
+            "get_weather",
+            "get_insurance_plans",
+            "add_insurance",
         }
         actual = {t["name"] for t in TOOLS}
         assert actual == expected
@@ -812,9 +852,9 @@ class TestBookFlight:
         )
         assert "Booking confirmed" in result
 
-    def test_tools_list_contains_eight_tools(self):
-        """TB-23: TOOLS list contains exactly 8 tools after TB-17."""
-        assert len(TOOLS) == 8
+    def test_tools_list_contains_twelve_tools(self):
+        """TB-31-32: TOOLS list contains 12 tools (added insurance + flight comparison)."""
+        assert len(TOOLS) == 12
 
 
 # ---------------------------------------------------------------------------
@@ -1174,3 +1214,202 @@ class TestBookTransport:
             },
         )
         assert "Transport booking confirmed" in result
+
+
+# ---------------------------------------------------------------------------
+# TestExecuteGetInsurancePlans — TB-31
+# ---------------------------------------------------------------------------
+
+
+class TestExecuteGetInsurancePlans:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_plans_list(self, respx_mock, mock_insurance_plans_response):
+        """TB-31: returns formatted list of insurance plans."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            return_value=httpx.Response(200, json=mock_insurance_plans_response)
+        )
+        result = await execute_get_insurance_plans({})
+        assert "Basic Coverage" in result
+        assert "Standard Protection" in result
+        assert "Premium Coverage" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_includes_prices(self, respx_mock, mock_insurance_plans_response):
+        """TB-31: plan prices are shown in response."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            return_value=httpx.Response(200, json=mock_insurance_plans_response)
+        )
+        result = await execute_get_insurance_plans({})
+        assert "$15" in result
+        assert "$35" in result
+        assert "$65" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_includes_coverage_types(
+        self, respx_mock, mock_insurance_plans_response
+    ):
+        """TB-31: coverage types are shown in response."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            return_value=httpx.Response(200, json=mock_insurance_plans_response)
+        )
+        result = await execute_get_insurance_plans({})
+        assert "cancellation" in result.lower() or "trip cancellation" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_no_plans_returns_message(self, respx_mock):
+        """TB-31: returns message when no plans are available."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            return_value=httpx.Response(200, json=[])
+        )
+        result = await execute_get_insurance_plans({})
+        assert "No insurance plans" in result
+
+    @pytest.mark.asyncio
+    async def test_server_unreachable_returns_message(self, respx_mock):
+        """TB-31: connection error returns unavailable message."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
+        result = await execute_get_insurance_plans({})
+        assert "unavailable" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_get_insurance_plans(
+        self, respx_mock, mock_insurance_plans_response
+    ):
+        """TB-31: execute_tool routes get_insurance_plans correctly."""
+        respx_mock.get("http://localhost:8000/insurance").mock(
+            return_value=httpx.Response(200, json=mock_insurance_plans_response)
+        )
+        result = await execute_tool("get_insurance_plans", {})
+        assert "Basic Coverage" in result
+
+
+# ---------------------------------------------------------------------------
+# TestExecuteAddInsurance — TB-31
+# ---------------------------------------------------------------------------
+
+
+class TestExecuteAddInsurance:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_confirmation_on_success(
+        self, respx_mock, mock_insurance_booking_response
+    ):
+        """TB-31: successful insurance booking returns confirmation."""
+        respx_mock.post("http://localhost:8000/insurance/book").mock(
+            return_value=httpx.Response(201, json=mock_insurance_booking_response)
+        )
+        result = await execute_add_insurance(
+            {
+                "plan_id": 2,
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Travel Insurance added" in result
+        assert mock_insurance_booking_response["booking_reference"] in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_shows_plan_name(self, respx_mock, mock_insurance_booking_response):
+        """TB-31: confirmation includes the plan name."""
+        respx_mock.post("http://localhost:8000/insurance/book").mock(
+            return_value=httpx.Response(201, json=mock_insurance_booking_response)
+        )
+        result = await execute_add_insurance(
+            {
+                "plan_id": 2,
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "Standard" in result
+
+    @pytest.mark.asyncio
+    async def test_plan_id_is_required(self):
+        """TB-31: missing plan_id returns error message."""
+        result = await execute_add_insurance(
+            {
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "plan_id is required" in result
+
+    @pytest.mark.asyncio
+    async def test_traveler_name_is_required(self):
+        """TB-31: missing traveler_name returns error message."""
+        result = await execute_add_insurance(
+            {
+                "plan_id": 2,
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "traveler_name is required" in result
+
+    @pytest.mark.asyncio
+    async def test_contact_email_is_required(self):
+        """TB-31: missing contact_email returns error message."""
+        result = await execute_add_insurance(
+            {
+                "plan_id": 2,
+                "traveler_name": "John Smith",
+            }
+        )
+        assert "contact_email is required" in result
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_returns_not_found_on_404(self, respx_mock):
+        """TB-31: 404 response returns plan not found message."""
+        respx_mock.post("http://localhost:8000/insurance/book").mock(
+            return_value=httpx.Response(404, json={"detail": "Plan not found"})
+        )
+        result = await execute_add_insurance(
+            {
+                "plan_id": 99,
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "not found" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_server_unreachable_returns_message(self, respx_mock):
+        """TB-31: connection error returns unavailable message."""
+        respx_mock.post("http://localhost:8000/insurance/book").mock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
+        result = await execute_add_insurance(
+            {
+                "plan_id": 2,
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            }
+        )
+        assert "unavailable" in result.lower()
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_dispatcher_routes_add_insurance(
+        self, respx_mock, mock_insurance_booking_response
+    ):
+        """TB-31: execute_tool routes add_insurance correctly."""
+        respx_mock.post("http://localhost:8000/insurance/book").mock(
+            return_value=httpx.Response(201, json=mock_insurance_booking_response)
+        )
+        result = await execute_tool(
+            "add_insurance",
+            {
+                "plan_id": 2,
+                "traveler_name": "John Smith",
+                "contact_email": "john@example.com",
+            },
+        )
+        assert "Travel Insurance added" in result

@@ -166,7 +166,9 @@ class TestClearHandler:
 
 class TestMessageHandler:
     @pytest.mark.asyncio
-    async def test_sends_typing_action(self, mock_update, mock_context, mocker):
+    async def test_sends_typing_action(
+        self, mock_update, mock_context, mocker, mock_language_en
+    ):
         """FR-9: typing action sent before calling agent per spec."""
         mocker.patch("bot.get_history", return_value=[])
         mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="Response!")
@@ -196,7 +198,7 @@ class TestMessageHandler:
 
     @pytest.mark.asyncio
     async def test_loads_history_before_agent_call(
-        self, mock_update, mock_context, mocker
+        self, mock_update, mock_context, mocker, mock_language_en
     ):
         """FR-9: get_history called before run_agent per spec."""
         call_order = []
@@ -215,7 +217,7 @@ class TestMessageHandler:
 
     @pytest.mark.asyncio
     async def test_stores_user_message_after_agent(
-        self, mock_update, mock_context, mocker
+        self, mock_update, mock_context, mocker, mock_language_en
     ):
         """FR-9: append_message called with user role after agent responds per spec."""
         mocker.patch("bot.get_history", return_value=[])
@@ -227,7 +229,7 @@ class TestMessageHandler:
 
     @pytest.mark.asyncio
     async def test_stores_assistant_response_after_agent(
-        self, mock_update, mock_context, mocker
+        self, mock_update, mock_context, mocker, mock_language_en
     ):
         """FR-9: append_message called with assistant role after agent responds per spec."""
         mocker.patch("bot.get_history", return_value=[])
@@ -239,7 +241,7 @@ class TestMessageHandler:
 
     @pytest.mark.asyncio
     async def test_sends_agent_response_to_telegram(
-        self, mock_update, mock_context, mocker
+        self, mock_update, mock_context, mocker, mock_language_en
     ):
         """FR-9: agent response is sent back to Telegram user per spec."""
         mocker.patch("bot.get_history", return_value=[])
@@ -253,14 +255,18 @@ class TestMessageHandler:
         mock_update.message.reply_text.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_sends_fallback_on_exception(self, mock_update, mock_context, mocker):
+    async def test_sends_fallback_on_exception(
+        self, mock_update, mock_context, mocker, mock_language_en
+    ):
         """FR-9: fallback message sent if any exception occurs per spec."""
         mocker.patch("bot.get_history", side_effect=Exception("unexpected error"))
         await bot.message_handler(mock_update, mock_context)
         mock_update.message.reply_text.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_fallback_message_exact(self, mock_update, mock_context, mocker):
+    async def test_fallback_message_exact(
+        self, mock_update, mock_context, mocker, mock_language_en
+    ):
         """FR-9: fallback message matches spec exactly."""
         mocker.patch("bot.get_history", side_effect=Exception("unexpected error"))
         await bot.message_handler(mock_update, mock_context)
@@ -269,7 +275,7 @@ class TestMessageHandler:
 
     @pytest.mark.asyncio
     async def test_response_is_escaped_before_sending(
-        self, mock_update, mock_context, mocker
+        self, mock_update, mock_context, mocker, mock_language_en
     ):
         """FR-9: escape_markdown applied to agent response before sending per spec."""
         raw_response = "Price: $100.00 — great_deal!"

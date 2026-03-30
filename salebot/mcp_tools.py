@@ -187,7 +187,14 @@ book_hotel_tool = {
                 "description": "Number of guests. Default 1.",
             },
         },
-        "required": ["hotel_id", "guest_name", "contact_email", "check_in_date", "check_out_date", "nights"],
+        "required": [
+            "hotel_id",
+            "guest_name",
+            "contact_email",
+            "check_in_date",
+            "check_out_date",
+            "nights",
+        ],
     },
 }
 
@@ -222,7 +229,12 @@ book_activity_tool = {
                 "description": "Number of participants. Default 1.",
             },
         },
-        "required": ["activity_id", "participant_name", "contact_email", "activity_date"],
+        "required": [
+            "activity_id",
+            "participant_name",
+            "contact_email",
+            "activity_date",
+        ],
     },
 }
 
@@ -257,6 +269,86 @@ book_transport_tool = {
     },
 }
 
+check_visa_tool = {
+    "name": "check_visa",
+    "description": (
+        "Check visa requirements for traveling to a destination country. "
+        "Pass the traveler's passport country as origin_country and destination country."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "origin_country": {
+                "type": "string",
+                "description": "The traveler's country of citizenship (e.g., Myanmar, Singapore)",
+            },
+            "destination_country": {
+                "type": "string",
+                "description": "The destination country to check requirements for (e.g., Japan, Thailand)",
+            },
+        },
+        "required": ["origin_country", "destination_country"],
+    },
+}
+
+get_weather_tool = {
+    "name": "get_weather",
+    "description": (
+        "Get weather forecast for a destination city. "
+        "Pass city name and optionally start_date/end_date (YYYY-MM-DD) to filter the forecast period."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "city": {
+                "type": "string",
+                "description": "The destination city name (e.g., Bangkok, Tokyo, Singapore)",
+            },
+            "start_date": {
+                "type": "string",
+                "description": "Start date of the forecast period in YYYY-MM-DD format (optional)",
+            },
+            "end_date": {
+                "type": "string",
+                "description": "End date of the forecast period in YYYY-MM-DD format (optional)",
+            },
+        },
+        "required": ["city"],
+    },
+}
+
+get_insurance_plans_tool = {
+    "name": "get_insurance_plans",
+    "description": "Get available travel insurance plans with pricing and coverage details.",
+    "input_schema": {
+        "type": "object",
+        "properties": {},
+    },
+}
+
+add_insurance_tool = {
+    "name": "add_insurance",
+    "description": "Add travel insurance to a booking. Pass plan_id (1=Basic, 2=Standard, 3=Premium), traveler_name, and contact_email.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "plan_id": {
+                "type": "integer",
+                "description": "Insurance plan ID (1=Basic $15, 2=Standard $35, 3=Premium $65)",
+            },
+            "traveler_name": {
+                "type": "string",
+                "description": "Name of person being insured",
+            },
+            "contact_email": {
+                "type": "string",
+                "description": "Email for insurance documents",
+            },
+        },
+        "required": ["plan_id", "traveler_name", "contact_email"],
+    },
+}
+
 TOOLS: list[dict[str, Any]] = [
     search_flights_tool,
     search_hotels_tool,
@@ -266,6 +358,10 @@ TOOLS: list[dict[str, Any]] = [
     book_hotel_tool,
     book_activity_tool,
     book_transport_tool,
+    check_visa_tool,
+    get_weather_tool,
+    get_insurance_plans_tool,
+    add_insurance_tool,
 ]
 
 
@@ -273,10 +369,12 @@ TOOLS: list[dict[str, Any]] = [
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
+
 def _fmt_time(iso: str) -> str:
     """Return a short human-readable time from an ISO datetime string."""
     try:
         from datetime import datetime
+
         dt = datetime.fromisoformat(iso)
         return dt.strftime("%a %d %b %H:%M")
     except Exception:
@@ -295,12 +393,16 @@ async def _get(path: str, params: dict[str, Any]) -> list[dict[str, Any]]:
 # Tool executors — each takes a raw input dict and returns a str
 # ---------------------------------------------------------------------------
 
+
 async def execute_search_flights(input: dict[str, Any]) -> str:
     destination = input.get("destination")
     origin = input.get("origin")
     class_type = input.get("class_type")
     try:
-        raw = await _get("/flights", {"origin": origin, "destination": destination, "class_type": class_type})
+        raw = await _get(
+            "/flights",
+            {"origin": origin, "destination": destination, "class_type": class_type},
+        )
     except (httpx.ConnectError, httpx.TimeoutException):
         return "Flight search is currently unavailable. Please try again."
 
@@ -321,7 +423,46 @@ async def execute_search_flights(input: dict[str, Any]) -> str:
     ]
     if not results:
         return "No flights found matching the search criteria."
-    return json.dumps(results, ensure_ascii=False)
+
+    cheapest = min(results, key=lambda x: x["price"])
+
+    def _get_duration(f: dict, raw_f: dict) -> str:
+        try:
+            from datetime import datetime
+
+            dep_raw = raw[[r["id"] for r in results].index(f["id"])]["departure_time"]
+            arr_raw = raw[[r["id"] for r in results].index(f["id"])]["arrival_time"]
+            dep = datetime.fromisoformat(dep_raw)
+            arr = datetime.fromisoformat(arr_raw)
+            delta = arr - dep
+            h = delta.seconds // 3600
+            m = (delta.seconds % 3600) // 60
+            return f"{h}h {m}m"
+        except Exception:
+            return "N/A"
+
+    parts = [f"**✈️ Flights: {origin or 'Bangkok'} → {destination}**\n"]
+    parts.append("| # | Airline | Departure | Arrival | Duration | Price | Seats |")
+    parts.append("|---|---------|-----------|---------|----------|-------|-------|")
+
+    raw_map = {r["id"]: r for r in raw}
+
+    for i, flight in enumerate(results, 1):
+        seats_indicator = "⚠️" if flight["seats_available"] < 20 else ""
+        duration_str = _get_duration(flight, raw_map)
+        parts.append(
+            f"| {i} | {flight['airline']} | {flight['departure_time']} | "
+            f"{flight['arrival_time']} | {duration_str} | ${flight['price']:.0f} | "
+            f"{flight['seats_available']} {seats_indicator} |"
+        )
+
+    parts.append("")
+    parts.append(f"💰 Best value: {cheapest['airline']} (${cheapest['price']:.0f})")
+
+    if len(results) > 1:
+        parts.append("Reply with the number (1-4) to select a flight.")
+
+    return "\n".join(parts)
 
 
 async def execute_search_hotels(input: dict[str, Any]) -> str:
@@ -331,7 +472,9 @@ async def execute_search_hotels(input: dict[str, Any]) -> str:
     stars = input.get("stars")
     max_price = input.get("max_price")
     try:
-        raw = await _get("/hotels", {"city": city, "stars": stars, "max_price": max_price})
+        raw = await _get(
+            "/hotels", {"city": city, "stars": stars, "max_price": max_price}
+        )
     except (httpx.ConnectError, httpx.TimeoutException):
         return "Hotel search is currently unavailable. Please try again."
 
@@ -390,7 +533,10 @@ async def execute_search_transport(input: dict[str, Any]) -> str:
     if not destination:
         return "Destination is required to search for transport."
     try:
-        raw = await _get("/transport", {"origin": origin, "destination": destination, "type": transport_type})
+        raw = await _get(
+            "/transport",
+            {"origin": origin, "destination": destination, "type": transport_type},
+        )
     except (httpx.ConnectError, httpx.TimeoutException):
         return "Transport search is currently unavailable. Please try again."
 
@@ -559,6 +705,57 @@ async def execute_book_activity(input: dict) -> str:
         return f"Activity booking failed: {str(e)}"
 
 
+async def execute_check_visa(input: dict) -> str:
+    origin = input.get("origin_country")
+    destination = input.get("destination_country")
+
+    if not origin:
+        return (
+            "origin_country (passport country) is required to check visa requirements."
+        )
+    if not destination:
+        return "destination_country is required to check visa requirements."
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.get(
+                f"{BASE_URL}/visa/{origin}/{destination}",
+            )
+        if resp.status_code == 404:
+            return f"Visa information for {origin} citizens traveling to {destination} is not in our database. Please check with the embassy or official immigration website."
+        resp.raise_for_status()
+        visa = resp.json()
+
+        parts = [f"**Visa Requirements: {origin} → {destination}**"]
+
+        if visa.get("visa_required"):
+            parts.append("❌ Visa Required")
+        else:
+            parts.append("✅ Visa Free")
+
+        if visa.get("visa_on_arrival"):
+            parts.append("📝 Visa on Arrival Available")
+
+        if visa.get("visa_eta"):
+            parts.append(f"eVisa: {visa['visa_eta']}")
+
+        if visa.get("max_stay_days"):
+            parts.append(f"Max Stay: {visa['max_stay_days']} days")
+
+        if visa.get("notes"):
+            parts.append(f"Notes: {visa['notes']}")
+
+        return "\n".join(parts)
+    except httpx.ConnectError:
+        return "Visa lookup is currently unavailable. Please try again."
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return f"Visa information for {origin} → {destination} is not available. Please consult the embassy."
+        return f"Visa lookup failed: {str(e)}"
+    except Exception as e:
+        return f"Visa check failed: {str(e)}"
+
+
 async def execute_book_transport(input: dict) -> str:
     transport_id = input.get("transport_id")
     passenger_name = input.get("passenger_name")
@@ -603,9 +800,168 @@ async def execute_book_transport(input: dict) -> str:
         return f"Transport booking failed: {str(e)}"
 
 
+async def execute_get_weather(input: dict) -> str:
+    city = input.get("city")
+    start_date = input.get("start_date")
+    end_date = input.get("end_date")
+
+    if not city:
+        return "city is required to get weather."
+
+    params = {}
+    if start_date:
+        params["start_date"] = start_date
+    if end_date:
+        params["end_date"] = end_date
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.get(
+                f"{BASE_URL}/weather/{city}",
+                params=params,
+            )
+        if resp.status_code == 404:
+            return f"Weather data for {city} is not available. Please try another city."
+        resp.raise_for_status()
+        data = resp.json()
+
+        if not data.get("forecasts"):
+            return f"No weather data available for {city} in the specified period."
+
+        condition_icons = {
+            "sunny": "☀️",
+            "partly_cloudy": "⛅",
+            "cloudy": "☁️",
+            "rainy": "🌧️",
+            "stormy": "⛈️",
+            "humid": "💧",
+        }
+
+        parts = [f"**Weather Forecast for {city.title()}**\n"]
+
+        for forecast in data["forecasts"][:7]:
+            icon = condition_icons.get(forecast["condition"], "🌤️")
+            parts.append(
+                f"{forecast['date']} | {icon} {forecast['condition'].replace('_', ' ').title()} | "
+                f"{forecast['temperature_min']:.0f}°C - {forecast['temperature_max']:.0f}°C | "
+                f"💧 {forecast['humidity']}%"
+            )
+
+        has_rain = any(f["precipitation_mm"] > 1 for f in data["forecasts"])
+        has_high_uv = any(f["uv_index"] > 7 for f in data["forecasts"])
+
+        tips = []
+        if has_rain:
+            tips.append("🌂 Bring an umbrella or rain jacket")
+        if has_high_uv:
+            tips.append("☀️ High UV - use sunscreen and a hat")
+        tips.append("👕 Light, breathable clothing recommended")
+
+        parts.append("\n**Travel Tips:**")
+        for tip in tips:
+            parts.append(f"• {tip}")
+
+        return "\n".join(parts)
+    except httpx.ConnectError:
+        return "Weather service is currently unavailable. Please try again."
+    except Exception as e:
+        return f"Weather lookup failed: {str(e)}"
+
+
+async def execute_get_insurance_plans(input: dict) -> str:
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.get(f"{BASE_URL}/insurance")
+        resp.raise_for_status()
+        plans = resp.json()
+
+        if not plans:
+            return "No insurance plans available at this time."
+
+        parts = ["**🛡️ Travel Insurance Options**\n"]
+
+        for plan in plans:
+            plan_num = plan["id"]
+            name = plan["name"]
+            price = plan["price_per_person"]
+            desc = plan["description"]
+
+            coverage = plan["coverage_types"].replace(",", ", ")
+            medical = plan.get("medical_coverage", 0)
+            cancellation = plan.get("cancellation_coverage", 0)
+
+            parts.append(f"**{plan_num}. {name} — ${price}/person**")
+            parts.append(f"   {desc}")
+            parts.append(f"   Coverage: {coverage}")
+
+            if medical > 0:
+                parts.append(f"   Medical: up to ${medical:,.0f}")
+            if cancellation > 0:
+                parts.append(f"   Cancellation: up to ${cancellation:,.0f}")
+            parts.append("")
+
+        parts.append("To add insurance, tell me which plan (1, 2, or 3) and your name.")
+        return "\n".join(parts)
+    except httpx.ConnectError:
+        return "Insurance service is currently unavailable. Please try again."
+    except Exception as e:
+        return f"Failed to load insurance plans: {str(e)}"
+
+
+async def execute_add_insurance(input: dict) -> str:
+    plan_id = input.get("plan_id")
+    traveler_name = input.get("traveler_name")
+    contact_email = input.get("contact_email")
+
+    if not plan_id:
+        return "plan_id is required to add insurance."
+    if not traveler_name:
+        return "traveler_name is required to add insurance."
+    if not contact_email:
+        return "contact_email is required to add insurance."
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.post(
+                f"{BASE_URL}/insurance/book",
+                json={
+                    "plan_id": plan_id,
+                    "traveler_name": traveler_name,
+                    "contact_email": contact_email,
+                },
+            )
+        if resp.status_code == 404:
+            return "Insurance plan not found. Please check available plans."
+        resp.raise_for_status()
+        booking = resp.json()
+
+        plan_name = (
+            "Basic" if plan_id == 1 else "Standard" if plan_id == 2 else "Premium"
+        )
+
+        return (
+            f"✅ Travel Insurance added!\n"
+            f"Reference: {booking['booking_reference']}\n"
+            f"Plan: {plan_name}\n"
+            f"Insured: {booking['traveler_name']}\n"
+            f"Email: {booking['contact_email']}\n"
+            f"Status: {booking['status']}\n\n"
+            f"Your insurance documents will be sent to {contact_email}"
+        )
+    except httpx.ConnectError:
+        return "Insurance service is currently unavailable. Please try again."
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return "Insurance plan not found."
+        return f"Insurance booking failed: {str(e)}"
+    except Exception as e:
+        return f"Insurance booking failed: {str(e)}"
+
+
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
+
 
 async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     """Route a tool call by name to the appropriate async function."""
@@ -625,4 +981,12 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
         return await execute_book_activity(tool_input)
     if tool_name == "book_transport":
         return await execute_book_transport(tool_input)
+    if tool_name == "check_visa":
+        return await execute_check_visa(tool_input)
+    if tool_name == "get_weather":
+        return await execute_get_weather(tool_input)
+    if tool_name == "get_insurance_plans":
+        return await execute_get_insurance_plans(tool_input)
+    if tool_name == "add_insurance":
+        return await execute_add_insurance(tool_input)
     return f"Unknown tool: {tool_name}"

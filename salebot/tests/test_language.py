@@ -126,3 +126,52 @@ class TestAutoDetect:
 
         result = _detect_language("Hello မင်္ဂလာပါ")
         assert result == "my"
+
+
+class TestBotLanguageFlow:
+    @pytest.mark.asyncio
+    async def test_first_message_shows_language_buttons(self, mocker):
+        """TB-26: first message without language shows selection buttons."""
+        import bot
+        from unittest.mock import AsyncMock, MagicMock
+
+        update = MagicMock()
+        update.effective_user.id = 88888
+        update.message.text = "Hello"
+        update.message.reply_text = AsyncMock()
+
+        context = MagicMock()
+
+        mocker.patch("bot.get_language", return_value=None)
+        mocker.patch("bot.set_language")
+
+        await bot.message_handler(update, context)
+
+        update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args
+        assert "lang_en" in str(call_args) or "lang_my" in str(call_args)
+
+    @pytest.mark.asyncio
+    async def test_subsequent_message_goes_to_agent(self, mocker):
+        """TB-26: after language is set, messages go directly to agent."""
+        import bot
+        from unittest.mock import AsyncMock, MagicMock
+
+        update = MagicMock()
+        update.effective_user.id = 88887
+        update.message.text = "I want to visit Singapore"
+        update.effective_chat.id = 88887
+        update.message.reply_text = AsyncMock()
+
+        context = MagicMock()
+        context.bot.send_chat_action = AsyncMock()
+
+        mocker.patch("bot.get_language", return_value="en")
+        mocker.patch("bot.get_history", return_value=[])
+        mocker.patch("bot.run_agent", new_callable=AsyncMock, return_value="Response!")
+        mocker.patch("bot.append_message")
+
+        await bot.message_handler(update, context)
+
+        bot.run_agent.assert_called_once()
+        context.bot.send_chat_action.assert_called_once()

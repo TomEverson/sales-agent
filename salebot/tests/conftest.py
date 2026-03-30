@@ -10,11 +10,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 @pytest.fixture(autouse=True)
 def clear_memory_store():
     """FR-6: reset the memory store before each test to ensure isolation."""
-    from memory import _store
+    from memory import _store, _language_prefs
 
     _store.clear()
+    _language_prefs.clear()
     yield
     _store.clear()
+    _language_prefs.clear()
+
+
+@pytest.fixture
+def mock_language_en(mocker):
+    """FR-9: mock get_language returning 'en' by default for message handler tests."""
+    mocker.patch("bot.get_language", return_value="en")
 
 
 @pytest.fixture
@@ -469,9 +477,9 @@ def mock_flight_response():
             "origin": "Bangkok",
             "destination": "Singapore",
             "departure_time": "2026-04-01T14:00:00",
-            "arrival_time": "2026-04-01T17:30:00",
+            "arrival_time": "2026-04-01T17:15:00",
             "price": 180.0,
-            "seats_available": 0,
+            "seats_available": 15,
             "class_type": "economy",
         },
     ]
@@ -536,6 +544,60 @@ def mock_transport_booking_response():
         "contact_email": "john@example.com",
         "passengers": 1,
         "booking_reference": "TB-20260328-D7R3",
+        "status": "confirmed",
+        "created_at": "2026-03-28T10:00:00",
+    }
+
+
+@pytest.fixture
+def mock_insurance_plans_response():
+    """TB-31: sample insurance plans response from server."""
+    return [
+        {
+            "id": 1,
+            "name": "Basic Coverage",
+            "description": "Trip cancellation and flight delay protection",
+            "price_per_person": 15.0,
+            "coverage_types": "cancellation,flight_delay",
+            "max_trip_value": 500.0,
+            "medical_coverage": 0.0,
+            "cancellation_coverage": 300.0,
+            "is_active": True,
+        },
+        {
+            "id": 2,
+            "name": "Standard Protection",
+            "description": "Basic + Medical expenses up to $10,000",
+            "price_per_person": 35.0,
+            "coverage_types": "cancellation,flight_delay,medical",
+            "max_trip_value": 1500.0,
+            "medical_coverage": 10000.0,
+            "cancellation_coverage": 500.0,
+            "is_active": True,
+        },
+        {
+            "id": 3,
+            "name": "Premium Coverage",
+            "description": "Standard + Lost luggage and adventure activities",
+            "price_per_person": 65.0,
+            "coverage_types": "cancellation,flight_delay,medical,luggage,adventure",
+            "max_trip_value": 3000.0,
+            "medical_coverage": 25000.0,
+            "cancellation_coverage": 1000.0,
+            "is_active": True,
+        },
+    ]
+
+
+@pytest.fixture
+def mock_insurance_booking_response():
+    """TB-31: sample InsuranceBooking response from server."""
+    return {
+        "id": 1,
+        "plan_id": 2,
+        "traveler_name": "John Smith",
+        "contact_email": "john@example.com",
+        "booking_reference": "INS-20260328-X4K9",
         "status": "confirmed",
         "created_at": "2026-03-28T10:00:00",
     }

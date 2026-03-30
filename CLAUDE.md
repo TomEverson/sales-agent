@@ -77,12 +77,12 @@ ANTHROPIC_API_KEY=...
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `salebot/agent.py` | Agentic loop: Claude API calls, tool dispatch, history management |
-| `salebot/mcp_tools.py` | Tool schemas for Claude + HTTP calls to backend |
+| File                               | Purpose |
+|------------------------------------|---------|
+| `salebot/agent.py`                 | Agentic loop: Claude API calls, tool dispatch, history management |
+| `salebot/mcp_tools.py`             | Tool schemas for Claude + HTTP calls to backend |
 | `salebot/prompts/system_prompt.md` | Agent persona and decision-making instructions |
-| `salebot/package_builder.py` | Formats complete tour packages as Telegram markdown |
-| `server/main.py` | FastAPI app setup, CORS, router registration |
-| `server/seed.py` | Populates `travel.db` with sample flights/hotels/activities/transport |
-| `docs/fr-1.md` | Feature requests and specs |
+| `salebot/package_builder.py`       | Formats complete tour packages as Telegram markdown |
+| `server/main.py`                   | FastAPI app setup, CORS, router registration |
+| `server/seed.py`                   | Populates `travel.db` with sample flights/hotels/activities/transport |
+| `specs/*`                          | Feature requests and specs |
