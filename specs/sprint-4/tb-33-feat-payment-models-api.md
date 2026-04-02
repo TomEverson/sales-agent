@@ -3,7 +3,7 @@ ticket: TB-33
 type: feat
 title: Payment Backend - Models & API
 sprint: sprint-4
-status: todo
+status: done
 component: server
 depends_on: none
 ---

@@ -147,3 +147,19 @@ export interface CreateTransportBooking {
   contact_email: string
   passengers: number
 }
+
+// Auth types
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface AuthToken {
+  access_token: string
+  token_type: string
+}
+
+export interface AuthUser {
+  email: string
+  is_admin: boolean
+}

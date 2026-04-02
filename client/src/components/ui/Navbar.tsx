@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -10,13 +11,21 @@ const links = [
 ]
 
 export default function Navbar() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
         <NavLink to="/" className="text-sky-500 font-bold text-lg tracking-tight">
           Travelbase
         </NavLink>
-        <div className="flex gap-6">
+        <div className="flex items-center gap-6">
           {links.map(({ to, label }) => (
             <NavLink
               key={to}
@@ -31,6 +40,14 @@ export default function Navbar() {
               {label}
             </NavLink>
           ))}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="text-sm font-medium text-slate-600 hover:text-red-600 transition-colors"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </nav>

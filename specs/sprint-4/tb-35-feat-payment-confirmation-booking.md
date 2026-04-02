@@ -3,7 +3,7 @@ ticket: TB-35
 type: feat
 title: Payment Bot Flow - Confirmation & Booking Creation
 sprint: sprint-4
-status: todo
+status: done
 component: salebot
 depends_on: TB-34
 ---

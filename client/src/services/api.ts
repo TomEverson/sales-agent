@@ -16,9 +16,21 @@ import type {
   CreateHotelBooking,
   CreateActivityBooking,
   CreateTransportBooking,
+  LoginCredentials,
+  AuthToken,
+  AuthUser,
 } from '../types'
 
 const api = axios.create({ baseURL: 'http://localhost:8000' })
+
+// Attach JWT token to every request if present
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 export async function getFlights(filters: FlightFilters): Promise<Flight[]> {
   try {
@@ -164,4 +176,15 @@ export async function getTransportBookings(email: string): Promise<TransportBook
     console.error('getTransportBookings error:', err)
     return []
   }
+}
+
+// Auth functions
+export async function login(credentials: LoginCredentials): Promise<AuthToken> {
+  const { data } = await api.post<AuthToken>('/auth/login', credentials)
+  return data
+}
+
+export async function verifyToken(token: string): Promise<AuthUser> {
+  const { data } = await api.get<AuthUser>('/auth/verify', { params: { token } })
+  return data
 }

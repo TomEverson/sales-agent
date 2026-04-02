@@ -349,6 +349,62 @@ add_insurance_tool = {
     },
 }
 
+initiate_payment_tool = {
+    "name": "initiate_payment",
+    "description": (
+        "Initiate a payment for a tour package. "
+        "Call this AFTER the user has confirmed they want to book the package. "
+        "This creates a payment record and returns a booking reference."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "amount": {
+                "type": "number",
+                "description": "Total amount to pay in USD.",
+            },
+        },
+        "required": ["amount"],
+    },
+}
+
+confirm_payment_tool = {
+    "name": "confirm_payment",
+    "description": (
+        "Confirm that payment has been received. "
+        "Call this AFTER the user sends a payment screenshot/photo. "
+        "This marks the payment as paid in the system."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "booking_reference": {
+                "type": "string",
+                "description": "The booking reference returned from initiate_payment.",
+            },
+        },
+        "required": ["booking_reference"],
+    },
+}
+
+check_payment_status_tool = {
+    "name": "check_payment_status",
+    "description": (
+        "Check the status of a payment. "
+        "Use this to verify if a payment has been confirmed."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "booking_reference": {
+                "type": "string",
+                "description": "The booking reference returned from initiate_payment.",
+            },
+        },
+        "required": ["booking_reference"],
+    },
+}
+
 TOOLS: list[dict[str, Any]] = [
     search_flights_tool,
     search_hotels_tool,
@@ -362,6 +418,9 @@ TOOLS: list[dict[str, Any]] = [
     get_weather_tool,
     get_insurance_plans_tool,
     add_insurance_tool,
+    initiate_payment_tool,
+    confirm_payment_tool,
+    check_payment_status_tool,
 ]
 
 
@@ -958,6 +1017,108 @@ async def execute_add_insurance(input: dict) -> str:
         return f"Insurance booking failed: {str(e)}"
 
 
+async def execute_initiate_payment(input: dict) -> str:
+    amount = input.get("amount")
+
+    if amount is None:
+        return "amount is required to initiate payment."
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.post(
+                f"{BASE_URL}/payments",
+                json={"amount": amount},
+            )
+        resp.raise_for_status()
+        payment = resp.json()
+
+        return (
+            f"✅ Payment initiated!\n\n"
+            f"💳 **Amount: ${amount:.2f}**\n\n"
+            f"📱 **Scan to Pay:**\n"
+            f"┌─────────────┐\n"
+            f"│ QR code would│\n"
+            f"│ be displayed │\n"
+            f"│    here     │\n"
+            f"└─────────────┘\n\n"
+            f"🔗 Payment Reference: {payment['booking_reference']}\n\n"
+            f"📸 Please send a screenshot of your payment confirmation.\n"
+            f"Once I receive the screenshot, I'll confirm your booking."
+        )
+    except httpx.ConnectError:
+        return "Payment service is currently unavailable. Please try again."
+    except Exception as e:
+        return f"Payment initiation failed: {str(e)}"
+
+
+async def execute_confirm_payment(input: dict) -> str:
+    booking_reference = input.get("booking_reference")
+
+    if not booking_reference:
+        return "booking_reference is required to confirm payment."
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.put(
+                f"{BASE_URL}/payments/{booking_reference}/confirm",
+            )
+        if resp.status_code == 404:
+            return "Payment not found. Please initiate payment first."
+        if resp.status_code == 400:
+            return "Payment has already been confirmed."
+        resp.raise_for_status()
+        payment = resp.json()
+
+        return (
+            f"✅ Payment confirmed!\n\n"
+            f"Reference: {payment['booking_reference']}\n"
+            f"Amount: ${payment['amount']:.2f}\n"
+            f"Status: {payment['status']}\n\n"
+            f"Now proceeding to create your bookings..."
+        )
+    except httpx.ConnectError:
+        return "Payment service is currently unavailable. Please try again."
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return "Payment not found. Please initiate payment first."
+        if e.response.status_code == 400:
+            return "Payment has already been confirmed."
+        return f"Payment confirmation failed: {str(e)}"
+    except Exception as e:
+        return f"Payment confirmation failed: {str(e)}"
+
+
+async def execute_check_payment_status(input: dict) -> str:
+    booking_reference = input.get("booking_reference")
+
+    if not booking_reference:
+        return "booking_reference is required to check payment status."
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.get(f"{BASE_URL}/payments/{booking_reference}")
+        if resp.status_code == 404:
+            return "Payment not found."
+        resp.raise_for_status()
+        payment = resp.json()
+
+        status_emoji = "✅" if payment["status"] == "paid" else "⏳"
+        return (
+            f"{status_emoji} Payment Status\n\n"
+            f"Reference: {payment['booking_reference']}\n"
+            f"Amount: ${payment['amount']:.2f}\n"
+            f"Status: {payment['status']}"
+        )
+    except httpx.ConnectError:
+        return "Payment service is currently unavailable. Please try again."
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return "Payment not found."
+        return f"Payment status check failed: {str(e)}"
+    except Exception as e:
+        return f"Payment status check failed: {str(e)}"
+
+
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
@@ -989,4 +1150,10 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
         return await execute_get_insurance_plans(tool_input)
     if tool_name == "add_insurance":
         return await execute_add_insurance(tool_input)
+    if tool_name == "initiate_payment":
+        return await execute_initiate_payment(tool_input)
+    if tool_name == "confirm_payment":
+        return await execute_confirm_payment(tool_input)
+    if tool_name == "check_payment_status":
+        return await execute_check_payment_status(tool_input)
     return f"Unknown tool: {tool_name}"

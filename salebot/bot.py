@@ -21,6 +21,8 @@ from memory import (
     get_history,
     get_language,
     set_language,
+    get_pending_payment,
+    clear_pending_payment,
 )
 
 load_dotenv()
@@ -150,11 +152,19 @@ async def clear_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message is None or update.effective_user is None:
+    if update.effective_user is None:
         return
 
     user_id = update.effective_user.id
-    user_message = update.message.text or ""
+
+    pending_payment = get_pending_payment(user_id)
+
+    if update.message and update.message.photo and pending_payment:
+        user_message = "Here's my payment screenshot"
+    elif update.message:
+        user_message = update.message.text or ""
+    else:
+        return
 
     if not user_message.strip():
         return
@@ -188,6 +198,13 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             escape_markdown(response),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
+
+        if (
+            "booking confirmed" in response.lower()
+            or "all bookings" in response.lower()
+        ):
+            clear_pending_payment(user_id)
+            clear_history(user_id)
     except Exception:
         await update.message.reply_text(
             "Sorry, something went wrong. Please try again in a moment."
@@ -210,7 +227,11 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(CommandHandler("clear", clear_handler))
     app.add_handler(CallbackQueryHandler(language_callback_handler, pattern="^lang_"))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+    app.add_handler(
+        MessageHandler(
+            (filters.TEXT | filters.PHOTO) & ~filters.COMMAND, message_handler
+        )
+    )
     app.add_error_handler(error_handler)
 
     logger.info("Travelbase bot is running...")

@@ -20,6 +20,7 @@ from models.booking import (
     ActivityBooking,
     TransportBooking,
 )
+from models.payment import Payment
 
 
 TEST_DB_URL = "sqlite:///./test_travel.db"
@@ -55,6 +56,8 @@ def setup_database():
             session.delete(a)
         for t in session.exec(select(Transport)).all():
             session.delete(t)
+        for p in session.exec(select(Payment)).all():
+            session.delete(p)
         session.commit()
     SQLModel.metadata.drop_all(test_engine)
 

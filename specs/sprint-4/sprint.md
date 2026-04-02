@@ -4,9 +4,12 @@
 
 | Ticket | Type | Title | Status |
 |--------|------|-------|--------|
-| TB-33 | feat | Payment Backend - Models & API | todo |
-| TB-34 | feat | Payment Bot Flow - QR Display | todo |
-| TB-35 | feat | Payment Bot Flow - Confirmation & Booking Creation | todo |
+| TB-36 | feat | Admin Authentication - Backend API | done |
+| TB-37 | feat | Admin Login Page | done |
+| TB-38 | feat | Protected Routes | done |
+| TB-33 | feat | Payment Backend - Models & API | done |
+| TB-34 | feat | Payment Bot Flow - QR Display | done |
+| TB-35 | feat | Payment Bot Flow - Confirmation & Booking Creation | done |
 | TB-30 | feat | Weather Forecast | done |
 | TB-31 | feat | Travel Insurance | done |
 | TB-32 | feat | Flight Comparison | done |

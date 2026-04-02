@@ -69,3 +69,24 @@ def get_language(user_id: int) -> str | None:
 def clear_language(user_id: int) -> None:
     """Remove the language preference for a user."""
     _language_prefs.pop(user_id, None)
+
+
+_pending_payment: dict[int, dict[str, Any]] = {}
+
+
+def set_pending_payment(user_id: int, booking_reference: str, amount: float) -> None:
+    """Store pending payment info (booking_reference, amount) for a user."""
+    _pending_payment[user_id] = {
+        "booking_reference": booking_reference,
+        "amount": amount,
+    }
+
+
+def get_pending_payment(user_id: int) -> dict[str, Any] | None:
+    """Return pending payment info for a user, or None if not set."""
+    return _pending_payment.get(user_id)
+
+
+def clear_pending_payment(user_id: int) -> None:
+    """Remove pending payment info for a user."""
+    _pending_payment.pop(user_id, None)

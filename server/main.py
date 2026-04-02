@@ -10,6 +10,8 @@ from routers import (
     visa,
     weather,
     insurance,
+    payments,
+    auth,
 )
 
 app = FastAPI(title="Travel Inventory API", redirect_slashes=False)
@@ -26,6 +28,12 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup() -> None:
     create_db_and_tables()
+    from routers.auth import ensure_admin_user
+    from sqlmodel import Session
+    from db import engine
+
+    with Session(engine) as session:
+        ensure_admin_user(session)
 
 
 app.include_router(flights.router)
@@ -36,3 +44,5 @@ app.include_router(bookings.router)
 app.include_router(visa.router)
 app.include_router(weather.router)
 app.include_router(insurance.router)
+app.include_router(payments.router)
+app.include_router(auth.router)

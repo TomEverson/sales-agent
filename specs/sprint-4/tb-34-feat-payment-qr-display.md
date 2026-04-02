@@ -3,7 +3,7 @@ ticket: TB-34
 type: feat
 title: Payment Bot Flow - QR Display
 sprint: sprint-4
-status: todo
+status: done
 component: salebot
 depends_on: TB-33
 ---
