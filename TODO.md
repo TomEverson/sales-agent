@@ -1,0 +1,5 @@
+- Payment ?
+- Security
+- PlayWright and Automated Testing
+- User Journey 
+- Way to call an operator
