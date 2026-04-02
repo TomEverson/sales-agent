@@ -163,3 +163,42 @@ export interface AuthUser {
   email: string
   is_admin: boolean
 }
+
+// Package booking types
+export interface BookingPackageItem {
+  kind: 'flight' | 'hotel' | 'activity' | 'transport'
+  id: number
+  passenger_name: string
+  contact_email: string
+  status: string
+  created_at: string
+  flight_id?: number
+  hotel_id?: number
+  activity_id?: number
+  transport_id?: number
+  seats_booked?: number
+  guests?: number
+  participants?: number
+  check_in_date?: string
+  check_out_date?: string
+  activity_date?: string
+}
+
+export interface BookingPackage {
+  booking_reference: string
+  items: BookingPackageItem[]
+  total_items: number
+  created_at: string
+}
+
+// Booking statistics
+export interface BookingStats {
+  total_bookings: number
+  unique_users: number
+  by_type: {
+    flights: number
+    hotels: number
+    activities: number
+    transport: number
+  }
+}

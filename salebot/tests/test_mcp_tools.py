@@ -643,8 +643,8 @@ class TestExecuteSearchTransport:
 
 class TestToolsRegistry:
     def test_tools_list_contains_all_tools(self):
-        """FR-4: TOOLS list must contain all 12 tools."""
-        assert len(TOOLS) == 12
+        """FR-4: TOOLS list must contain all 16 tools."""
+        assert len(TOOLS) == 16
 
     def test_tools_list_has_search_tools(self):
         """FR-4: TOOLS list must include the 5 search tools."""
@@ -681,6 +681,10 @@ class TestToolsRegistry:
             "get_weather",
             "get_insurance_plans",
             "add_insurance",
+            "initiate_payment",
+            "confirm_payment",
+            "check_payment_status",
+            "get_operator_contact",
         }
         actual = {t["name"] for t in TOOLS}
         assert actual == expected
@@ -853,8 +857,8 @@ class TestBookFlight:
         assert "Booking confirmed" in result
 
     def test_tools_list_contains_twelve_tools(self):
-        """TB-31-32: TOOLS list contains 12 tools (added insurance + flight comparison)."""
-        assert len(TOOLS) == 12
+        """TB-31-32: TOOLS list contains 16 tools (added insurance, payment + operator contact)."""
+        assert len(TOOLS) == 16
 
 
 # ---------------------------------------------------------------------------

@@ -16,6 +16,12 @@ from routers import (
 
 app = FastAPI(title="Travel Inventory API", redirect_slashes=False)
 
+
+@app.get("/health")
+def health_check() -> dict:
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

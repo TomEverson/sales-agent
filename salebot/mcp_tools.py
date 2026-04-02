@@ -405,6 +405,31 @@ check_payment_status_tool = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Operator Contact Tool
+# ---------------------------------------------------------------------------
+
+OPERATOR_CONTACT = """📞 Operator Contact
+
+If you need human assistance, you can reach our support team:
+
+• Phone / WhatsApp: +66 81 234 5678
+• Email: support@travelbase.com
+• Telegram: @travelbase_support
+
+Our operators are available 24/7 to help with booking issues, payment problems, or any questions the bot cannot resolve.
+"""
+
+get_operator_contact_tool = {
+    "name": "get_operator_contact",
+    "description": "Get contact information for a human operator. Use this when you cannot resolve the user's issue or when the user asks to speak with a human.",
+    "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    },
+}
+
 TOOLS: list[dict[str, Any]] = [
     search_flights_tool,
     search_hotels_tool,
@@ -421,6 +446,7 @@ TOOLS: list[dict[str, Any]] = [
     initiate_payment_tool,
     confirm_payment_tool,
     check_payment_status_tool,
+    get_operator_contact_tool,
 ]
 
 
@@ -1119,6 +1145,11 @@ async def execute_check_payment_status(input: dict) -> str:
         return f"Payment status check failed: {str(e)}"
 
 
+async def execute_get_operator_contact(input: dict) -> str:
+    """Return operator contact information for human assistance."""
+    return OPERATOR_CONTACT
+
+
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
@@ -1156,4 +1187,6 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
         return await execute_confirm_payment(tool_input)
     if tool_name == "check_payment_status":
         return await execute_check_payment_status(tool_input)
+    if tool_name == "get_operator_contact":
+        return await execute_get_operator_contact(tool_input)
     return f"Unknown tool: {tool_name}"

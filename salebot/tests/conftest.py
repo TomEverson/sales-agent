@@ -165,6 +165,7 @@ def mock_update():
     update.effective_user.id = 12345
     update.effective_chat.id = 12345
     update.message.text = "I want to visit Singapore, budget $1000"
+    update.message.photo = None  # Explicitly None for text messages
     update.message.reply_text = AsyncMock()
     update.effective_message.reply_text = AsyncMock()
     return update

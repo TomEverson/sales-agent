@@ -11,6 +11,9 @@ from models.activity import Activity
 from models.booking import (
     ActivityBooking,
     ActivityBookingCreate,
+    BookingPackage,
+    BookingPackageItem,
+    BookingStats,
     FlightBooking,
     FlightBookingCreate,
     HotelBooking,
@@ -32,7 +35,9 @@ def generate_booking_reference(session: Session) -> str:
         ref = f"TB-{today}-{suffix}"
         # Check uniqueness across all 4 booking tables
         if (
-            session.exec(select(FlightBooking).where(FlightBooking.booking_reference == ref)).first()
+            session.exec(
+                select(FlightBooking).where(FlightBooking.booking_reference == ref)
+            ).first()
             is None
             and session.exec(
                 select(HotelBooking).where(HotelBooking.booking_reference == ref)
@@ -43,7 +48,9 @@ def generate_booking_reference(session: Session) -> str:
             ).first()
             is None
             and session.exec(
-                select(TransportBooking).where(TransportBooking.booking_reference == ref)
+                select(TransportBooking).where(
+                    TransportBooking.booking_reference == ref
+                )
             ).first()
             is None
         ):
@@ -70,7 +77,9 @@ def create_flight_booking(
     flight.seats_available -= booking.seats_booked
     session.add(flight)
     ref = generate_booking_reference(session)
-    db_booking = FlightBooking.model_validate(booking, update={"booking_reference": ref})
+    db_booking = FlightBooking.model_validate(
+        booking, update={"booking_reference": ref}
+    )
     session.add(db_booking)
     session.commit()
     session.refresh(db_booking)
@@ -157,7 +166,9 @@ def create_activity_booking(
     if not activity:
         raise HTTPException(status_code=404, detail="Activity not found")
     ref = generate_booking_reference(session)
-    db_booking = ActivityBooking.model_validate(booking, update={"booking_reference": ref})
+    db_booking = ActivityBooking.model_validate(
+        booking, update={"booking_reference": ref}
+    )
     session.add(db_booking)
     session.commit()
     session.refresh(db_booking)
@@ -204,7 +215,9 @@ def create_transport_booking(
     transport.capacity -= booking.passengers
     session.add(transport)
     ref = generate_booking_reference(session)
-    db_booking = TransportBooking.model_validate(booking, update={"booking_reference": ref})
+    db_booking = TransportBooking.model_validate(
+        booking, update={"booking_reference": ref}
+    )
     session.add(db_booking)
     session.commit()
     session.refresh(db_booking)
@@ -229,3 +242,159 @@ def get_transport_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Transport booking not found")
     return booking
+
+
+# ---------------------------------------------------------------------------
+# Package grouping & statistics
+# ---------------------------------------------------------------------------
+
+
+@router.get("/packages", response_model=list[BookingPackage])
+def list_booking_packages(
+    session: Session = Depends(get_session),
+) -> list[BookingPackage]:
+    """Return all bookings grouped by booking_reference as packages."""
+    all_refs: set[str] = set()
+
+    # Collect all unique booking references
+    for cls, kind in [
+        (FlightBooking, "flight"),
+        (HotelBooking, "hotel"),
+        (ActivityBooking, "activity"),
+        (TransportBooking, "transport"),
+    ]:
+        refs = session.exec(select(cls.booking_reference)).all()
+        all_refs.update(refs)
+
+    packages: list[BookingPackage] = []
+    for ref in sorted(all_refs):
+        items: list[BookingPackageItem] = []
+        earliest: str = ""
+
+        # Flight bookings
+        flight_rows = session.exec(
+            select(FlightBooking).where(FlightBooking.booking_reference == ref)
+        ).all()
+        for row in flight_rows:
+            created = row.created_at.isoformat() if row.created_at else ""
+            if not earliest or created < earliest:
+                earliest = created
+                items.append(
+                    BookingPackageItem(
+                        kind="flight",
+                        id=row.id or 0,
+                        passenger_name=row.passenger_name,
+                        contact_email=row.contact_email,
+                        status=row.status,
+                        created_at=row.created_at,
+                        flight_id=row.flight_id,
+                        seats_booked=row.seats_booked,
+                    )
+                )
+
+        # Hotel bookings
+        hotel_rows = session.exec(
+            select(HotelBooking).where(HotelBooking.booking_reference == ref)
+        ).all()
+        for row in hotel_rows:
+            created = row.created_at.isoformat() if row.created_at else ""
+            if not earliest or created < earliest:
+                earliest = created
+                items.append(
+                    BookingPackageItem(
+                        kind="hotel",
+                        id=row.id or 0,
+                        passenger_name=row.guest_name,
+                        contact_email=row.contact_email,
+                        status=row.status,
+                        created_at=row.created_at,
+                        hotel_id=row.hotel_id,
+                        guests=row.guests,
+                        check_in_date=row.check_in_date,
+                        check_out_date=row.check_out_date,
+                    )
+                )
+
+        # Activity bookings
+        activity_rows = session.exec(
+            select(ActivityBooking).where(ActivityBooking.booking_reference == ref)
+        ).all()
+        for row in activity_rows:
+            created = row.created_at.isoformat() if row.created_at else ""
+            if not earliest or created < earliest:
+                earliest = created
+                items.append(
+                    BookingPackageItem(
+                        kind="activity",
+                        id=row.id or 0,
+                        passenger_name=row.participant_name,
+                        contact_email=row.contact_email,
+                        status=row.status,
+                        created_at=row.created_at,
+                        activity_id=row.activity_id,
+                        participants=row.participants,
+                        activity_date=row.activity_date,
+                    )
+                )
+
+        # Transport bookings
+        transport_rows = session.exec(
+            select(TransportBooking).where(TransportBooking.booking_reference == ref)
+        ).all()
+        for row in transport_rows:
+            created = row.created_at.isoformat() if row.created_at else ""
+            if not earliest or created < earliest:
+                earliest = created
+            items.append(
+                BookingPackageItem(
+                    kind="transport",
+                    id=row.id or 0,
+                    passenger_name=row.passenger_name,
+                    contact_email=row.contact_email,
+                    status=row.status,
+                    created_at=row.created_at,
+                    transport_id=row.transport_id,
+                    passengers=row.passengers,
+                )
+            )
+
+        packages.append(
+            BookingPackage(
+                booking_reference=ref,
+                items=items,
+                total_items=len(items),
+                created_at=earliest,
+            )
+        )
+
+    # Sort by most recent first
+    packages.sort(key=lambda p: p.created_at, reverse=True)
+    return packages
+
+
+@router.get("/stats", response_model=BookingStats)
+def get_booking_stats(session: Session = Depends(get_session)) -> BookingStats:
+    """Return aggregated booking statistics."""
+    flight_count = len(session.exec(select(FlightBooking)).all())
+    hotel_count = len(session.exec(select(HotelBooking)).all())
+    activity_count = len(session.exec(select(ActivityBooking)).all())
+    transport_count = len(session.exec(select(TransportBooking)).all())
+
+    total = flight_count + hotel_count + activity_count + transport_count
+
+    # Unique users
+    emails: set[str] = set()
+    for cls in [FlightBooking, HotelBooking, ActivityBooking, TransportBooking]:
+        rows = session.exec(select(cls.contact_email)).all()
+        emails.update(rows)
+
+    return BookingStats(
+        total_bookings=total,
+        unique_users=len(emails),
+        by_type={
+            "flights": flight_count,
+            "hotels": hotel_count,
+            "activities": activity_count,
+            "transport": transport_count,
+        },
+    )

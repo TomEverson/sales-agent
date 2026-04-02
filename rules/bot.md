@@ -2,7 +2,7 @@ Build a Telegram bot sales agent for a travel website called Travelbase.
 
 ## Stack
 - python-telegram-bot (async)
-- Anthropic Claude API (claude-sonnet-4-5 model)
+- Anthropic Claude API (claude-haiku-4-5 model)
 - MCP tools that call the FastAPI backend at http://localhost:8000
 - uv for environment management
 

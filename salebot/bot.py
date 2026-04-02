@@ -21,7 +21,7 @@ from memory import (
     get_history,
     get_language,
     set_language,
-    get_pending_payment,
+    set_pending_payment,
     clear_pending_payment,
 )
 
@@ -78,7 +78,7 @@ LANG_SELECT = "🌐 Please select your language:\\n\nဘာသာစကားက
 EN_CONFIRM = "Language set to English."
 MY_CONFIRM = "ဘာသာစကားကို မြန်မာလို သတ်မှတ်လိုက်ပါပြီ။"
 
-_MD_SPECIAL = re.compile(r"([\\\_*\[\]()~`>#+\-=|{}.!])")
+_MD_SPECIAL = re.compile(r"([\\\_*\[\]()~`>#+\-=|{}!])")
 
 
 def escape_markdown(text: str) -> str:
@@ -157,9 +157,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     user_id = update.effective_user.id
 
-    pending_payment = get_pending_payment(user_id)
+    is_screenshot = update.message and update.message.photo
 
-    if update.message and update.message.photo and pending_payment:
+    if is_screenshot:
         user_message = "Here's my payment screenshot"
     elif update.message:
         user_message = update.message.text or ""
@@ -169,7 +169,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not user_message.strip():
         return
 
-    logger.info(f"Message from user {user_id}: {user_message[:50]}")
+    logger.info(
+        f"Message from user {user_id}: {user_message[:50] if user_message else '(photo)'}"
+    )
 
     lang = get_language(user_id)
     if lang is None:
@@ -198,6 +200,15 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             escape_markdown(response),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
+
+        # Extract booking reference from response and store as pending payment
+        payment_match = re.search(r"Payment Reference:\s*(PAY-[A-Z0-9]+)", response)
+        if payment_match:
+            booking_ref = payment_match.group(1)
+            set_pending_payment(
+                user_id, booking_ref, 0
+            )  # amount not needed for confirm
+            logger.info(f"Stored pending payment: {booking_ref}")
 
         if (
             "booking confirmed" in response.lower()

@@ -8,6 +8,7 @@ const links = [
   { to: '/activities', label: 'Activities' },
   { to: '/transport', label: 'Transport' },
   { to: '/bookings', label: 'Bookings' },
+  { to: '/support', label: 'Support' },
 ]
 
 export default function Navbar() {

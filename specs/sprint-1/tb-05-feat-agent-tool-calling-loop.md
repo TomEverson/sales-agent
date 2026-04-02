@@ -58,7 +58,7 @@ Create the main function: async def run_agent(user_id: int, user_message: str, h
 #### Loop behavior
 1. Build messages list: history + new user message
 2. Call Claude API:
-   - model: claude-sonnet-4-5
+   - model: claude-haiku-4-5
    - max_tokens: 4096
    - system: load_system_prompt()
    - tools: TOOLS from mcp_tools
@@ -249,7 +249,7 @@ def sample_history():
 - [ ] execute_tool_call catches all exceptions and returns error string
 - [ ] Error string from execute_tool_call includes the tool name
 - [ ] run_agent(user_id, user_message, history) exists with exact signature
-- [ ] Uses model: claude-sonnet-4-5
+- [ ] Uses model: claude-haiku-4-5
 - [ ] Uses max_tokens: 4096
 - [ ] Passes TOOLS from mcp_tools to Claude API
 - [ ] History is included in the messages list sent to Claude

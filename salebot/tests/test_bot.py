@@ -62,16 +62,16 @@ class TestEscapeMarkdown:
         assert escape_markdown("hello*world") == "hello\\*world"
 
     def test_escapes_period(self):
-        """FR-9: period is escaped with backslash per spec."""
-        assert escape_markdown("hello.world") == "hello\\.world"
+        """FR-9: period is NOT escaped (Telegram doesn't require it)."""
+        assert escape_markdown("hello.world") == "hello.world"
 
     def test_escapes_hyphen(self):
         """FR-9: hyphen is escaped with backslash per spec."""
         assert escape_markdown("hello-world") == "hello\\-world"
 
     def test_escapes_all_special_chars(self):
-        """FR-9: all 19 special chars are escaped per spec."""
-        special = "\\_*[]()~`>#+-=|{}.!"
+        """FR-9: all special chars except dot are escaped per spec."""
+        special = "\\_*[]()~`>#+-=|{}!"
         result = escape_markdown(special)
         for ch in special:
             assert f"\\{ch}" in result

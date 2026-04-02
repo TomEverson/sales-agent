@@ -19,6 +19,8 @@ import type {
   LoginCredentials,
   AuthToken,
   AuthUser,
+  BookingPackage,
+  BookingStats,
 } from '../types'
 
 const api = axios.create({ baseURL: 'http://localhost:8000' })
@@ -187,4 +189,25 @@ export async function login(credentials: LoginCredentials): Promise<AuthToken> {
 export async function verifyToken(token: string): Promise<AuthUser> {
   const { data } = await api.get<AuthUser>('/auth/verify', { params: { token } })
   return data
+}
+
+// Booking package & stats
+export async function getBookingPackages(): Promise<BookingPackage[]> {
+  try {
+    const { data } = await api.get<BookingPackage[]>('/bookings/packages')
+    return data
+  } catch (err) {
+    console.error('getBookingPackages error:', err)
+    return []
+  }
+}
+
+export async function getBookingStats(): Promise<BookingStats> {
+  try {
+    const { data } = await api.get<BookingStats>('/bookings/stats')
+    return data
+  } catch (err) {
+    console.error('getBookingStats error:', err)
+    return { total_bookings: 0, unique_users: 0, by_type: { flights: 0, hotels: 0, activities: 0, transport: 0 } }
+  }
 }

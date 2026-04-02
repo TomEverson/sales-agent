@@ -6,7 +6,7 @@ import anthropic
 
 from mcp_tools import TOOLS, execute_tool
 
-MODEL = "claude-sonnet-4-5"
+MODEL = "claude-haiku-4-5"
 MAX_TOKENS = 4096
 
 _system_prompt: str | None = None

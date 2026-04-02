@@ -7,6 +7,7 @@ import Hotels from './pages/Hotels'
 import Activities from './pages/Activities'
 import Transport from './pages/Transport'
 import Bookings from './pages/Bookings'
+import Support from './pages/Support'
 import Login from './pages/Login'
 import type { ReactNode } from 'react'
 
@@ -29,6 +30,7 @@ function AppRoutes() {
           <Route path="/activities" element={<PrivateRoute><Activities /></PrivateRoute>} />
           <Route path="/transport" element={<PrivateRoute><Transport /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
+          <Route path="/support" element={<PrivateRoute><Support /></PrivateRoute>} />
         </Routes>
       </main>
     </>
