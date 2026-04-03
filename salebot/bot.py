@@ -75,7 +75,7 @@ MM_WELCOME = (
 
 LANG_SELECT = "🌐 Please select your language:\\n\nဘာသာစကားကို ရွေးချယ်ပါ\\:"
 
-EN_CONFIRM = "Language set to English."
+EN_CONFIRM = "Language set to English\\."
 MY_CONFIRM = "ဘာသာစကားကို မြန်မာလို သတ်မှတ်လိုက်ပါပြီ။"
 
 _MD_SPECIAL = re.compile(r"([\\\_*\[\]()~`>#+\-=|{}!])")

@@ -10,5 +10,49 @@
       "role": "user",
       "content": "user B"
     }
+  ],
+  "6303072481": [
+    {
+      "role": "user",
+      "content": "I need help\nCall support"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm here to help! \ud83d\udc4b \n\nBefore I connect you with our support team, let me ask a quick question: **What can I help you with?**\n\nAre you looking to:\n- \ud83c\udf0d Build a custom tour package to Southeast Asia?\n- \u2708\ufe0f Book a flight, hotel, or activity?\n- \ud83d\udd27 Resolve an issue with an existing booking?\n- \u2753 Get information about visa requirements or travel tips?\n\nIf you'd prefer to speak with a human operator directly, I can connect you right away. Just let me know!"
+    },
+    {
+      "role": "user",
+      "content": "Human operator pls"
+    },
+    {
+      "role": "assistant",
+      "content": "Here's how you can reach our support team:\n\n\ud83d\udcde **Phone / WhatsApp:** +66 81 234 5678  \n\ud83d\udce7 **Email:** support@travelbase.com  \n\ud83d\udcac **Telegram:** @travelbase_support\n\nOur operators are available **24/7** and can help with any booking issues, payments, or questions.\n\nIs there anything else I can help you with while you wait? \ud83d\ude0a"
+    }
+  ],
+  "1546850433": [
+    {
+      "role": "user",
+      "content": "i want to go singapore at april 5 with 2 people ."
+    },
+    {
+      "role": "assistant",
+      "content": "Great! I'd love to help you build a trip to Singapore for April 5th with 2 people. \n\nBefore I search for flights and hotels, I need just two more details:\n\n1. **Where will you be flying from?** (e.g., Bangkok, Kuala Lumpur, your home city?)\n2. **What's your total budget for this trip?** (in USD for both travelers combined)\n\nOnce I have these, I can find you the best flights, hotels, and activities! \u2708\ufe0f"
+    },
+    {
+      "role": "user",
+      "content": "bangkok at morning\naround 1000"
+    },
+    {
+      "role": "assistant",
+      "content": "I see the flights available don't have April 5th. Let me clarify: **the earliest morning flight to Singapore is Thai Airways on April 3rd at 7:00 AM** (departing Bangkok). The next available options are April 9th, 15th, or June 5th.\n\nWould you like me to build a package around **April 3-5** (arriving April 3rd morning, 2-3 nights in Singapore), or would you prefer a **different date range** closer to April 5th?\n\nOnce you confirm the dates, here's what I found:\n\n**Hotels Available:**\n- Champion Hotel (3\u2b50) \u2014 $95/night \u2713 Budget-friendly\n- Hotel Indigo (4\u2b50) \u2014 $175/night  \n- One Farrer Hotel (5\u2b50) \u2014 $395/night\n- Plus luxury options from $420-550/night\n\n**Activities (per person):**\n- Gardens by the Bay \u2014 $42\n- Night Safari \u2014 $58\n- Sentosa Island Beach Club \u2014 $65\n- Street Food Tour \u2014 $85\n- Universal Studios \u2014 $110\n\nWhich flight date works for you? \ud83d\udeeb"
+    },
+    {
+      "role": "user",
+      "content": "One Farrer Hotel (5\u2b50) \u2014 $395/night Night Safari \u2014 $58"
+    },
+    {
+      "role": "assistant",
+      "content": "Great! Here are your flight options. **Which would you prefer?**\n\n| # | Flight | Departure | Price |\n|---|--------|-----------|-------|\n| 1 | **Thai Airways** | Fri, Apr 3 @ 7:00 AM | **$185/person** \u2728 Best value |\n| 2 | Thai Airways | Thu, Apr 9 @ 6:00 AM | $190/person |\n| 3 | Thai Airways | Wed, Apr 15 @ 7:30 AM | $188/person |\n| 4 | Thai Airways | Fri, Jun 5 @ 9:00 AM | $198/person |\n\nSince you wanted April 5th and morning departure, **Option 1 (Apr 3)** gets you there closest to your date with the cheapest fare. \n\nShould I build your package with **Flight #1** (Apr 3)? That would give you 2-3 nights at the One Farrer Hotel with Night Safari included. \ud83c\udf03"
+    }
   ]
 }
