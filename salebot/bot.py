@@ -78,7 +78,7 @@ LANG_SELECT = "🌐 Please select your language:\\n\nဘာသာစကားက
 EN_CONFIRM = "Language set to English\\."
 MY_CONFIRM = "ဘာသာစကားကို မြန်မာလို သတ်မှတ်လိုက်ပါပြီ။"
 
-_MD_SPECIAL = re.compile(r"([\\\_*\[\]()~`>#+\-=|{}!])")
+_MD_SPECIAL = re.compile(r"([\\\_*\[\]()~`>#+\-=|{}.!])")
 
 
 def escape_markdown(text: str) -> str:
@@ -216,7 +216,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         ):
             clear_pending_payment(user_id)
             clear_history(user_id)
-    except Exception:
+    except Exception as e:
+        logger.exception(f"Error handling message from user {user_id}: {e}")
         await update.message.reply_text(
             "Sorry, something went wrong. Please try again in a moment."
         )
